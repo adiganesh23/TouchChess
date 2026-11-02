@@ -33,25 +33,46 @@ No Live Server? Run this in the VS Code terminal instead (needs Node.js):
 
     index.html            Page structure and all labelled controls
     css/styles.css        Colours, board, high-contrast and calm themes
-    js/app.js             Everything else: board, speech, haptics, tones, lessons, computer opponent
+    js/app.js             Board, speech, haptics, tones, commands, computer opponent
+    js/lessons.js         The course: every lesson, position and answer
     js/vendor/chess.js    Chess rules engine (chess.js 0.10.3, BSD licence)
+    fonts/                Atkinson Hyperlegible, self-hosted so it works offline (OFL licence)
     sw.js                 Offline cache
     manifest.webmanifest  Lets phones install it as an app
+    tests/test_app.py     End-to-end tests that drive the app in Chrome
 
-## Where to change things in js/app.js
+## Where to change things
 
 | What | Look for |
 |---|---|
-| Lessons (positions, goals) | `const LESSONS` |
-| Vibration patterns per piece | `const PAT` |
-| Settings and their default values | `const DEFAULTS` and `const OPTS` |
+| Lessons (positions, goals, explanations) | `js/lessons.js`; the step types are explained at the top |
+| Piece drawings | `const PIECE_ART` in `js/app.js` |
+| Vibration patterns per piece | `const PAT` in `js/app.js` |
+| What each piece does, its points and pattern | `const PIECE_INFO` in `js/app.js` |
+| Quick setups on the welcome screen | `const PRESETS` in `js/app.js` |
+| Settings and their default values | `const DEFAULTS` and `const OPTS` in `js/app.js` |
 | What the screen reader says on each square | `function render` (the `aria-label`) |
 | Typed commands | `function runCommand` |
 | Computer opponent | `function cpuPick` |
 | Tones (pitch per rank, pan per file) | `function tone` |
 
-## Testing accessibility
+If you change a cached file list, or add a file, update `FILES` in `sw.js`.
+
+## Running the tests
+
+Needs Python and Google Chrome:
+
+    python3 -m venv .venv
+    .venv/bin/pip install playwright
+    .venv/bin/python tests/test_app.py
+
+To add an automated accessibility audit, download
+[axe-core's `axe.min.js`](https://cdn.jsdelivr.net/npm/axe-core/axe.min.js) and pass its path as an argument.
+
+Automated checks cannot tell you whether the app is pleasant to use with a screen reader or a braille
+display. Test with real assistive technology, and ideally with the people it is for:
 
 - **iPhone:** Settings → Accessibility → VoiceOver. Swipe across the board; double-tap to pick up and place.
+  iPhones do not allow vibration from web apps.
 - **Android:** Settings → Accessibility → TalkBack. Vibration patterns only work on Android.
-- **Computer:** Windows NVDA (free) or Mac VoiceOver (Cmd + F5). Click the board, then use the arrow keys.
+- **Computer:** Windows NVDA (free) or Mac VoiceOver (Cmd + F5). Move to the board, then use the arrow keys.

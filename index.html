@@ -3,19 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Touchpoint Chess</title>
-<meta name="description" content="Accessible chess for blind, deaf, deafblind and sensory-sensitive learners.">
+<title>Play - Touchpoint Chess</title>
+<meta name="description" content="Learn and play chess by sound, touch, braille or sight. Built for blind, deaf, deafblind and sensory-sensitive learners.">
 <meta name="theme-color" content="#1E2B3A">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Atkinson+Hyperlegible+Mono:wght@400;700&family=Noto+Sans+Symbols+2&display=swap">
 <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+<a class="skip" href="#board" id="skipBoard">Skip to the chessboard</a>
 <div id="sr-polite" class="sr" aria-live="polite" aria-atomic="true"></div>
 <div id="sr-alert" class="sr" aria-live="assertive" aria-atomic="true"></div>
 
@@ -23,33 +22,55 @@
   <div class="wrap">
     <div class="brand">
       <div class="mark" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-      <div><h1>Touchpoint Chess</h1><p>Chess you can hear, feel, read and see</p></div>
+      <h1>Touchpoint Chess</h1>
     </div>
-    <span class="mode-pill" id="modePill">Free play</span>
+    <span class="mode-pill" id="modePill">vs computer</span>
   </div>
 </header>
+
+<!-- Visible on every view, so feedback is never hidden. Screen readers get the same text from the live regions above. -->
+<div class="banner-bar">
+  <div class="wrap">
+    <div class="banner" id="banner" data-level="info" aria-hidden="true">You play White. Tap a piece, or type a move like e4.</div>
+  </div>
+</div>
 
 <main class="wrap">
   <!-- PLAY -->
   <section id="view-play" aria-labelledby="playH">
-    <h2 id="playH" class="sr">Play</h2>
+    <h2 id="playH" class="sr" tabindex="-1">Play</h2>
     <div class="play">
-      <div class="col">
-        <div class="banner" id="banner" aria-hidden="true">You play White. Tap a piece, or type a move like e4.</div>
+      <div class="col board-col">
         <div class="lesson-card" id="lessonCard" hidden>
           <div class="eyebrow" id="lcEyebrow">Lesson</div>
-          <h2 id="lcTitle">Lesson</h2>
           <div class="steps" id="lcSteps" aria-hidden="true"></div>
-          <p id="lcGoal"></p>
-          <div class="actions">
-            <button class="btn" id="lcHint" type="button">Show hint</button>
-            <button class="btn" id="lcRepeat" type="button">Repeat goal</button>
-            <button class="btn primary" id="lcNext" type="button" hidden>Next lesson</button>
-            <button class="btn" id="lcExit" type="button">Leave lesson</button>
+          <div id="lcText" class="lc-text" tabindex="-1">
+            <h2 id="lcTitle">Lesson</h2>
+            <p id="lcIntro"></p>
+            <p id="lcGoal" class="lc-goal"></p>
+            <p id="lcFeedback" class="lc-feedback" hidden></p>
+          </div>
+          <div class="choices" id="lcChoices" hidden></div>
+          <button class="btn primary" id="lcNext" type="button" hidden>Next step</button>
+        </div>
+
+        <div class="board-stack">
+          <div class="board-wrap" id="boardWrap">
+            <div class="ranks" id="ranks" aria-hidden="true"></div>
+            <div class="board" id="board" role="grid" aria-label="Chessboard. Move between squares, then activate a square to pick up or place a piece."></div>
+            <div class="files" id="files" aria-hidden="true"></div>
+          </div>
+
+          <div class="status-row" aria-hidden="true">
+            <span class="turn" id="turnChip"><i class="turn-dot"></i><span id="turnText">White to move</span></span>
+            <span class="readout" id="readout"></span>
           </div>
         </div>
-        <div class="board-wrap" id="boardWrap">
-          <div class="board" id="board" role="grid" aria-label="Chessboard. Use arrow keys to move between squares, Enter to pick up or place a piece."></div>
+
+        <div class="actions" id="lessonActions" hidden>
+          <button class="btn" id="lcHint" type="button">Show hint</button>
+          <button class="btn" id="lcRepeat" type="button">Repeat goal</button>
+          <button class="btn" id="lcExit" type="button">Leave lesson</button>
         </div>
       </div>
 
@@ -57,10 +78,10 @@
         <div class="panel">
           <label class="label" for="cmdInput">Type a move or command</label>
           <form class="cmd" id="cmdForm" autocomplete="off">
-            <input id="cmdInput" type="text" inputmode="text" autocapitalize="none" spellcheck="false" placeholder="e4, Nf3, e2 e4, board, help" aria-describedby="cmdHelp">
+            <input id="cmdInput" type="text" inputmode="text" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="e4, Nf3, board, help" aria-describedby="cmdHelp">
             <button class="btn primary" type="submit">Go</button>
           </form>
-          <p id="cmdHelp" class="sr">Works with braille displays and voice dictation. Commands: board, last, moves followed by a square, undo, hint, help.</p>
+          <p id="cmdHelp" class="sr">Works with braille displays and voice dictation. Type help to hear every command.</p>
           <div class="actions">
             <button class="btn" type="button" id="bDescribe">Describe board</button>
             <button class="btn" type="button" id="bLast">Last move</button>
@@ -80,7 +101,7 @@
 
         <div class="panel">
           <h2>Captions</h2>
-          <ol class="log" id="log" aria-label="Everything the app has announced, newest first"></ol>
+          <ol class="log" id="log" aria-label="Everything the app has announced, newest first" tabindex="0"></ol>
         </div>
       </div>
     </div>
@@ -89,57 +110,94 @@
   <!-- LEARN -->
   <section id="view-learn" class="section" aria-labelledby="learnH" hidden>
     <header>
-      <h2 id="learnH">Learn</h2>
-      <p>Short lessons that run on the real board. Every goal is spoken, captioned and felt, so you can learn by ear, by touch or by sight.</p>
+      <h2 id="learnH" tabindex="-1">Learn</h2>
+      <p>Short lessons on the real board, from your first square to your first game. Take as long as you like: nothing moves on until you say so.</p>
+      <p class="progress" id="progress"></p>
     </header>
     <div class="lessons" id="lessons"></div>
 
     <header>
-      <h2>Feel the pieces</h2>
-      <p>Each piece has its own vibration. Tap one to feel it and hear its name. Short buzzes are the minor pieces, long buzzes are the major ones.</p>
+      <h2>Know the pieces</h2>
+      <p id="feelIntro">Each piece has its own vibration. Select one to feel it and hear how it moves. Short buzzes are the smaller pieces, long buzzes are the bigger ones.</p>
     </header>
     <div class="feel" id="feel"></div>
 
     <div class="panel">
+      <h2>Chess words</h2>
+      <dl class="glossary">
+        <div><dt>File</dt><dd>A column of squares, named a to h.</dd></div>
+        <div><dt>Rank</dt><dd>A row of squares, numbered 1 to 8.</dd></div>
+        <div><dt>Capture</dt><dd>Moving onto an enemy piece, which removes it from the board.</dd></div>
+        <div><dt>Check</dt><dd>The king is under attack and must be saved right away.</dd></div>
+        <div><dt>Checkmate</dt><dd>The king is in check with no way out. The game is over and the attacker wins.</dd></div>
+        <div><dt>Stalemate</dt><dd>A player is not in check but has no legal move. The game is a draw.</dd></div>
+        <div><dt>Castling</dt><dd>The king moves two squares toward a rook, and the rook jumps to its other side.</dd></div>
+        <div><dt>Promotion</dt><dd>A pawn that reaches the far side becomes a queen, rook, bishop or knight.</dd></div>
+        <div><dt>En passant</dt><dd>A pawn captures an enemy pawn that has just moved two squares past it.</dd></div>
+      </dl>
+    </div>
+
+    <div class="panel">
       <h2>How Touchpoint works</h2>
-      <p style="margin:0">Every square is a labelled control, so VoiceOver and TalkBack read it aloud as "e4, white pawn". Refreshable braille displays show the same text. Deaf players get a caption for every move and a colour-and-pattern alert for check. Deafblind players can explore by vibration and type moves from a braille keyboard. Nothing relies on colour alone: selected, last-move and check squares each have their own pattern.</p>
+      <p class="flush">Every square is a labelled control, so VoiceOver and TalkBack read it aloud as "e4, white pawn", and refreshable braille displays show the same text. Deaf players get a caption for every move and a visual alert for check. Deafblind players can type moves from a braille keyboard, and on Android they can feel the board by vibration. Nothing relies on colour alone: selected, last-move and check squares each have their own pattern.</p>
     </div>
   </section>
 
   <!-- OPTIONS -->
   <section id="view-options" class="section" aria-labelledby="optH" hidden>
     <header>
-      <h2 id="optH">Access settings</h2>
-      <p>Mix and match. Your choices are remembered on this device.</p>
+      <h2 id="optH" tabindex="-1">Access settings</h2>
+      <p>Start from a setup, then mix and match. Your choices are remembered on this device.</p>
     </header>
+    <div class="panel">
+      <h3 id="presetL">Quick setups</h3>
+      <div class="presets" id="presets" role="group" aria-labelledby="presetL"></div>
+    </div>
     <div class="opts" id="opts"></div>
     <div class="panel">
       <h2>Keyboard and braille keyboard shortcuts</h2>
-      <div style="overflow-x:auto">
+      <p class="flush">These work while a square on the board has focus.</p>
+      <div class="table-scroll" tabindex="0" role="region" aria-label="Shortcuts table">
       <table class="keys">
+        <thead><tr><th scope="col">Key</th><th scope="col">What it does</th></tr></thead>
+        <tbody>
         <tr><td><kbd>Arrows</kbd></td><td>Move around the board</td></tr>
+        <tr><td><kbd>Home</kbd> <kbd>End</kbd></td><td>Jump to the start or end of this rank</td></tr>
         <tr><td><kbd>Enter</kbd> <kbd>Space</kbd></td><td>Pick up a piece, then place it</td></tr>
         <tr><td><kbd>Esc</kbd></td><td>Put the piece back down</td></tr>
         <tr><td><kbd>M</kbd></td><td>Where can the piece on this square go?</td></tr>
         <tr><td><kbd>A</kbd></td><td>Which pieces attack this square?</td></tr>
+        <tr><td><kbd>R</kbd></td><td>Read this rank from left to right</td></tr>
+        <tr><td><kbd>F</kbd></td><td>Read this file from near to far</td></tr>
         <tr><td><kbd>D</kbd></td><td>Describe the whole board</td></tr>
         <tr><td><kbd>L</kbd></td><td>Repeat the last move</td></tr>
+        <tr><td><kbd>S</kbd></td><td>Whose turn is it, and what has been captured?</td></tr>
         <tr><td><kbd>H</kbd></td><td>Lesson hint</td></tr>
+        <tr><td><kbd>N</kbd></td><td>Next lesson step</td></tr>
+        </tbody>
       </table>
       </div>
+      <p class="flush">In the command box you can also type: board, last, status, undo, flip, new, hint, next, repeat, leave, moves e2, attacks e4, rank 4, file e, about knight.</p>
     </div>
   </section>
 </main>
 
 <nav class="tabs" aria-label="Sections">
   <div class="in">
-    <button type="button" data-view="play" aria-current="page"><span class="g" aria-hidden="true">&#x265E;&#xFE0E;</span>Play</button>
-    <button type="button" data-view="learn"><span class="g" aria-hidden="true">&#x265D;&#xFE0E;</span>Learn</button>
-    <button type="button" data-view="options"><span class="g" aria-hidden="true">&#x265B;&#xFE0E;</span>Access</button>
+    <button type="button" data-view="play" aria-current="page"><span class="g" data-piece="n" aria-hidden="true"></span>Play</button>
+    <button type="button" data-view="learn"><span class="g" data-piece="b" aria-hidden="true"></span>Learn</button>
+    <button type="button" data-view="options"><span class="g" data-piece="q" aria-hidden="true"></span>Access</button>
   </div>
 </nav>
 
+<dialog id="dlg" aria-labelledby="dlgTitle" aria-describedby="dlgBody">
+  <h2 id="dlgTitle"></h2>
+  <p id="dlgBody"></p>
+  <div class="dlg-options" id="dlgOptions"></div>
+</dialog>
+
 <script src="js/vendor/chess.js"></script>
+<script src="js/lessons.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
