@@ -1,0 +1,9 @@
+{
+  "name": "touchpoint-chess",
+  "version": "1.0.0",
+  "description": "Accessible chess for blind, deaf, deafblind and sensory-sensitive learners.",
+  "private": true,
+  "scripts": {
+    "start": "npx --yes serve@14.2.4 -l 5173 ."
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Touchpoint Chess",
+  "short_name": "Touchpoint",
+  "description": "Accessible chess for blind, deaf, deafblind and sensory-sensitive learners.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#EEF2F6",
+  "theme_color": "#1E2B3A",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
