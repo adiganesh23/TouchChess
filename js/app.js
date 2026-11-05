@@ -32,30 +32,45 @@ const PIECE_ART = {
 };
 const pieceSvg = (type, color) => `<svg class="pc ${color}" viewBox="0 0 100 100" aria-hidden="true" focusable="false">${PIECE_ART[type]}</svg>`;
 
+const TOUR = TPC_TOUR;
+const HAS_SPEECH = 'speechSynthesis' in window;
+
 const DEFAULTS = {
-  speech: false, rate: 1, sound: false, haptics: true, explore: false, flash: true, brief: false,
+  speech: false, rate: 1, volume: 1, voice: '', sound: false, haptics: true, explore: false, flash: true, brief: false,
   contrast: false, letters: false, coords: true, hints: true, calm: false,
   theme: 'auto', textSize: 'normal', cpu: 'gentle', opponent: 'cpu', onboarded: false
 };
 const settings = Object.assign({}, DEFAULTS);
 function readJson(key) { try { const v = JSON.parse(localStorage.getItem(key)); return v && typeof v === 'object' ? v : {}; } catch (e) { return {}; } }
 Object.assign(settings, readJson('tpc-settings'));
-function save() { try { localStorage.setItem('tpc-settings', JSON.stringify(settings)); } catch (e) {} }
+/* App speech is opt-in for each visit. It is kept for this tab only, never between visits,
+   so the app cannot start talking before someone chooses it. */
+settings.speech = (() => { try { return sessionStorage.getItem('tpc-speech') === '1'; } catch (e) { return false; } })();
+function save() {
+  const keep = Object.assign({}, settings); delete keep.speech;
+  try { localStorage.setItem('tpc-settings', JSON.stringify(keep)); } catch (e) {}
+  try { sessionStorage.setItem('tpc-speech', settings.speech ? '1' : '0'); } catch (e) {}
+}
 const done = readJson('tpc-done');
 function saveDone() { try { localStorage.setItem('tpc-done', JSON.stringify(done)); } catch (e) {} }
 
 const S = {
   game: new Chess(), selected: null, focus: 'e2', flipped: false, last: null, hint: null, busy: false, timer: null,
-  lesson: null, step: 0, awaitNext: false, complete: false, saved: null
+  lesson: null, step: 0, awaitNext: false, complete: false, saved: null, typed: false, tourReturn: null
 };
 const $ = id => document.getElementById(id);
-const boardEl = $('board'), srP = $('sr-polite'), srA = $('sr-alert'), banner = $('banner'), logEl = $('log');
+const boardEl = $('board'), srP = $('sr-polite'), banner = $('banner'), logEl = $('log');
 const cells = {};
 const cap = s => s[0].toUpperCase() + s.slice(1);
+
+/* No sound of any kind until the person has pressed a key or touched the screen. */
+let userActed = false;
+for (const t of ['pointerdown', 'keydown']) addEventListener(t, () => { userActed = true; }, { capture: true, once: true });
 
 /* ---------- Feedback channels ---------- */
 let audioCtx = null;
 function ctx() {
+  if (!userActed) return null;
   if (!audioCtx) { try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; } }
   if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
   return audioCtx;
@@ -81,15 +96,29 @@ function chime(level) {
   else if (level === 'error') beep(196, 'sine', 0.16, 0.25, 0);
   else if (level === 'alert') [880, 660].forEach((n, i) => beep(n, 'square', 0.08, 0.2, 0, i * 0.2));
 }
-function buzz(p, force) { if ((!settings.haptics && !force) || !p || !CAN_VIBRATE) return; try { navigator.vibrate(p); } catch (e) {} }
+function buzz(p, force) { if ((!settings.haptics && !force) || !p || !CAN_VIBRATE || !userActed) return; try { navigator.vibrate(p); } catch (e) {} }
+
+let voices = [];
+function loadVoices() {
+  if (!HAS_SPEECH) return;
+  try { voices = speechSynthesis.getVoices() || []; } catch (e) { voices = []; }
+  fillVoices();
+}
 function say(t, force) {
-  if ((!settings.speech && !force) || !('speechSynthesis' in window)) return;
+  if ((!settings.speech && !force) || !userActed || !HAS_SPEECH || !t) return;
   try {
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(t);
     u.rate = settings.calm ? Math.min(settings.rate, 0.9) : settings.rate;
+    u.volume = settings.volume;
+    const v = settings.voice && voices.find(x => x.voiceURI === settings.voice);
+    if (v) { u.voice = v; u.lang = v.lang; }
     speechSynthesis.speak(u);
   } catch (e) {}
+}
+function stopSpeech(quiet) {
+  if (HAS_SPEECH) try { speechSynthesis.cancel(); } catch (e) {}
+  if (!quiet) { banner.textContent = 'Speech stopped.'; banner.dataset.level = 'info'; }
 }
 function flash() {
   if (!settings.flash || settings.calm) return;
@@ -102,49 +131,85 @@ function logAdd(t, level) {
   li.append(tm, document.createTextNode(t)); logEl.prepend(li);
   while (logEl.children.length > 100) logEl.lastChild.remove();
 }
-let liveTimer = null;
-/* opt.short: what the banner shows, and what braille and speech get in brief mode.
-   opt.noLive: focus is about to land on this same text, so a live region would read it twice. */
+
+/* Everything said in the same moment is joined into one message, so a reply never cuts off the
+   message before it, and nothing is read twice. One polite live region carries it all.
+   opt.short:   what the banner shows, and what braille and speech get in brief mode.
+   opt.noLive:  focus is about to land on this same text, so the live region stays out of it.
+   opt.repeat:  a repeat of the last message; not added to Captions again.
+   opt.bar:     text for the message bar only, when the full text is already on screen nearby. */
+const live = { q: [], speak: [], focusSpeech: '', t: null, force: false };
+let lastMsg = null;
+function queue() { clearTimeout(live.t); live.t = setTimeout(flushLive, 60); }
+function flushLive() {
+  live.t = null;
+  const text = live.q.join(' '), spoken = live.speak.join(' ');
+  if (text) srP.textContent = text;
+  const speech = [live.focusSpeech, spoken].filter(Boolean).join('. ');
+  if (speech) say(speech, live.force);
+  if (spoken) lastMsg = { spoken, shown: banner.textContent, level: banner.dataset.level };
+  live.q = []; live.speak = []; live.focusSpeech = ''; live.force = false;
+}
 function announce(text, level = 'info', opt = {}) {
   const spoken = settings.brief && opt.short ? opt.short : text;
-  if (!opt.noLive) {
-    const region = level === 'alert' ? srA : srP, other = level === 'alert' ? srP : srA;
-    other.textContent = ''; region.textContent = '';
-    clearTimeout(liveTimer); liveTimer = setTimeout(() => { region.textContent = spoken; }, 60);
-  }
-  banner.textContent = opt.short || text; banner.dataset.level = level; logAdd(text, level);
-  if (opt.speak !== false) say(spoken, opt.forceSpeech);
+  if (!live.t) srP.textContent = '';  // cleared first, so the same words twice in a row are still read
+  if (!opt.noLive) live.q.push(spoken);
+  if (opt.speak !== false) live.speak.push(spoken);
+  if (opt.forceSpeech) live.force = true;
+  queue();
+  banner.textContent = opt.bar || opt.short || text; banner.dataset.level = level;
+  if (!opt.repeat) logAdd(text, level);
   chime(level);
   if (level === 'alert') { flash(); buzz(opt.haptic || PAT.check); }
   else if (level === 'error') buzz(opt.haptic || PAT.error);
   else if (level === 'success') buzz(opt.haptic || PAT.success);
   else if (opt.haptic) buzz(opt.haptic, opt.forceHaptic);
 }
+/* Square names while moving around: speech only (screen readers already read the focused square),
+   and only the newest one, so holding an arrow key does not pile up. */
+function speakFocus(text) { if (!settings.speech) return; live.focusSpeech = text; queue(); }
+function repeatLast() {
+  if (!lastMsg) announce('Nothing to repeat yet.', 'info', { repeat: true });
+  else {
+    const m = lastMsg;
+    announce(m.spoken, m.level === 'alert' ? 'alert' : 'info', { repeat: true, short: m.shown });
+  }
+  tourEvent('repeat');
+}
 
-/* ---------- Dialog ---------- */
-/* options: [{label, value, primary, html}]. Resolves with the chosen value, or null if dismissed with Esc. */
-function ask({ title, body, options, grid }) {
-  const dlg = $('dlg'), box = $('dlgOptions');
-  $('dlgTitle').textContent = title; $('dlgBody').textContent = body || ''; $('dlgBody').hidden = !body;
-  box.innerHTML = '';
-  const holder = grid ? box.appendChild(Object.assign(document.createElement('div'), { className: 'row-4' })) : box;
+/* ---------- Questions, built into the page ---------- */
+/* options: [{label, value, primary, html}]. Resolves with the chosen value, or null if cancelled with Esc.
+   block: the board waits for an answer (used for promotion). */
+let askFinish = null;
+function ask({ title, body, options, grid, returnTo, block }) {
+  if (askFinish) askFinish(null, false);
+  const box = $('ask'), holder = $('askOptions');
+  $('askTitle').textContent = title; $('askBody').textContent = body || ''; $('askBody').hidden = !body;
+  holder.innerHTML = ''; holder.className = 'ask-options' + (grid ? ' grid' : '');
+  box.hidden = false; S.askBlocks = !!block;
   return new Promise(resolve => {
+    const onKey = e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); finish(null, true); } };
+    const finish = (value, restore) => {
+      askFinish = null; S.askBlocks = false;
+      box.hidden = true; holder.innerHTML = ''; box.removeEventListener('keydown', onKey);
+      resolve(value);
+      const back = typeof returnTo === 'function' ? returnTo() : returnTo;
+      if (restore && back && document.contains(back)) back.focus();
+    };
+    box.addEventListener('keydown', onKey);
+    askFinish = finish;
     options.forEach(o => {
       const b = document.createElement('button');
       b.type = 'button'; b.className = 'btn' + (o.primary ? ' primary' : '') + (o.html ? ' piece-btn' : '');
       if (o.html) { b.innerHTML = o.html; b.setAttribute('aria-label', o.label); } else b.textContent = o.label;
-      if (o.detail) { const s = document.createElement('small'); s.textContent = o.detail; b.appendChild(s); }
-      b.addEventListener('click', () => dlg.close(String(options.indexOf(o))));
+      b.addEventListener('click', () => finish(o.value, true));
       holder.appendChild(b);
     });
-    dlg.returnValue = '';
-    dlg.addEventListener('close', () => {
-      const o = options[+dlg.returnValue];
-      resolve(dlg.returnValue !== '' && o ? o.value : null);
-    }, { once: true });
-    dlg.showModal();
+    box.scrollIntoView({ block: 'nearest' });
+    box.focus({ preventScroll: true });
   });
 }
+const cancelAsk = () => { if (askFinish) askFinish(null, false); };
 
 /* ---------- Board ---------- */
 const isLight = sq => (FILES.indexOf(sq[0]) + (+sq[1])) % 2 === 0;
@@ -195,7 +260,7 @@ function render() {
     if (S.hint === sq) l += ', hint';
     cell.setAttribute('aria-label', l);
   }
-  $('modePill').textContent = S.lesson ? 'Lesson' : (settings.opponent === 'cpu' ? 'vs computer' : 'Two players');
+  $('modePill').textContent = S.lesson ? (S.lesson.tour ? 'Tutorial' : 'Lesson') : (settings.opponent === 'cpu' ? 'You vs computer' : 'Two players');
   $('oppPanel').hidden = !!S.lesson;
   $('lessonActions').hidden = !S.lesson;
   $('bNew').hidden = !!S.lesson;
@@ -217,7 +282,9 @@ function setFocus(sq, moveFocus = true, feedback = true) {
   if (feedback) {
     const p = S.game.get(sq);
     buzz(p ? PAT[p.type] : PAT.empty); tone(sq, p);
-    if (settings.speech) say(`${sq}, ${pieceName(p)}`);
+    speakFocus(`${sq}, ${pieceName(p)}`);
+    // In the tour, arriving on the square is enough: arrow keys alone can finish the step.
+    if (S.lesson && S.lesson.tour && !S.awaitNext && curStep().type === 'find' && sq === curStep().target) findCheck(sq);
   }
 }
 function canControl(color) {
@@ -249,6 +316,7 @@ const targetCount = sq => new Set(movesFor(sq).map(m => m.to)).size;
 const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 function activate(sq) {
   if (S.busy) return announce('One moment, the computer is thinking.', 'info');
+  if (S.askBlocks) return announce('First choose what your pawn becomes, or press Escape to cancel.', 'info');
   const g = S.game, p = g.get(sq);
   if (S.lesson) {
     if (S.awaitNext) return announce(`${sq}, ${pieceName(p)}. ${S.complete ? 'This lesson is finished.' : 'Choose Next step to carry on.'}`, 'info');
@@ -275,6 +343,7 @@ function select(sq) {
   const p = S.game.get(sq), t = listTargets(sq), n = targetCount(sq), name = cap(pieceName(p));
   announce(`Picked up ${pieceName(p)} on ${sq}. ${t ? 'It can go to ' + t + '.' : 'It has no legal moves right now.'}`, 'info',
     { haptic: PAT[p.type], short: n ? `${name} on ${sq}: ${plural(n, 'move')}${settings.hints ? ', marked on the board.' : '.'}` : `${name} on ${sq} has no legal moves.` });
+  tourEvent('moves');
 }
 function describeMove(m) {
   const who = COLOR[m.color];
@@ -328,10 +397,12 @@ async function makeMove(from, to, promo) {
     else {
       const c = g.get(from).color;
       promotion = await ask({
-        title: 'Promote your pawn', body: `The pawn reaches ${to}. What should it become?`, grid: true,
+        title: 'Promote your pawn', body: `The pawn reaches ${to}. What should it become? Press Escape to cancel.`, grid: true, block: true,
+        returnTo: () => cells[S.focus],
         options: ['q', 'r', 'b', 'n'].map((t, i) => ({ value: t, label: cap(NAMES[t]), primary: i === 0, html: `<span class="swatch">${pieceSvg(t, c)}</span>${cap(NAMES[t])}` }))
+          .concat({ value: null, label: 'Cancel' })
       });
-      if (!promotion) { S.selected = null; render(); cells[S.focus].focus(); return announce('Promotion cancelled. The pawn stays where it was.', 'info'); }
+      if (!promotion) { S.selected = null; render(); return announce('Promotion cancelled. The pawn stays where it was.', 'info'); }
     }
   }
   if (S.lesson) return lessonMove(from, to, promotion);
@@ -385,8 +456,9 @@ function cpuPick() {
   return best;
 }
 
-/* ---------- Lessons ---------- */
+/* ---------- Lessons and the tutorial ---------- */
 const curStep = () => S.lesson.steps[S.step];
+const inTour = () => !!(S.lesson && S.lesson.tour);
 /* Directions as the learner sees them, so they stay right on a flipped board. */
 function dirText(from, to) {
   const flip = S.flipped ? -1 : 1;
@@ -395,25 +467,37 @@ function dirText(from, to) {
   if (dr) parts.push(`${plural(Math.abs(dr), 'rank')} ${dr > 0 ? 'up' : 'down'}`);
   return parts.join(' and ');
 }
-function focusLessonText() {
+function focusLessonText(el = 'lcText') {
   // Focus lands on the goal text, so screen readers read it in full and the board is the very next stop.
-  $('lcText').focus({ preventScroll: true });
+  // After an answer it lands on the feedback alone, so nothing is read twice.
+  $(el).focus({ preventScroll: true });
   $('lessonCard').scrollIntoView({ block: 'nearest' });
 }
-function startLesson(id) {
-  clearPending();
+function enterCourse(course) {
+  clearPending(); cancelAsk();
   if (!S.lesson) S.saved = { game: S.game, last: S.last, flipped: S.flipped };
   S.game = new Chess();
-  S.lesson = LESSONS.find(l => l.id === id); S.step = 0;
+  S.lesson = course; S.step = 0;
   S.flipped = false; buildBoard();  // lesson wording assumes White is at the bottom
   show('play', false); loadStep(true);
 }
+const startLesson = id => enterCourse(LESSONS.find(l => l.id === id));
+function startTour(returnTo) { S.tourReturn = returnTo || null; enterCourse(TOUR); }
+const isLastStep = () => S.step === S.lesson.steps.length - 1;
+const nextLabel = () => !isLastStep() ? 'Next step' : inTour() ? 'Finish tutorial' : 'Finish lesson';
 function loadStep(first) {
   clearPending();
-  const st = curStep();
-  S.game.load(st.fen); S.selected = null; S.last = null; S.hint = null; S.awaitNext = false; S.complete = false;
-  S.focus = st.type === 'find' || st.type === 'choice' ? 'a1' : st.from;
-  $('lessonCard').hidden = false; $('lcNext').hidden = true; $('lcHint').hidden = st.type === 'choice'; $('lcRepeat').hidden = false;
+  const st = curStep(), tour = inTour(), info = st.type === 'info';
+  S.game.load(st.fen); S.last = null;
+  for (const m of st.pre || []) S.last = S.game.move(m);
+  S.selected = null; S.hint = null; S.awaitNext = info; S.complete = false;
+  S.focus = st.from || st.start || 'a1';
+  $('lessonCard').hidden = false;
+  $('lcNext').textContent = nextLabel(); $('lcNext').hidden = !info;
+  $('lcHint').hidden = st.type === 'choice' || info;
+  $('lcRepeat').hidden = false; $('lcRepeat').textContent = tour ? 'Repeat step' : 'Repeat goal';
+  $('lcExit').textContent = tour ? 'Skip tutorial' : 'Leave lesson';
+  $('lcHelp').hidden = !tour;
   $('lcFeedback').hidden = true; $('lcFeedback').textContent = '';
   $('lcEyebrow').textContent = `${S.lesson.tag} · step ${S.step + 1} of ${S.lesson.steps.length}`;
   $('lcTitle').textContent = S.lesson.title;
@@ -422,84 +506,110 @@ function loadStep(first) {
   $('lcSteps').innerHTML = S.lesson.steps.map((_, i) => `<span class="${i <= S.step ? 'on' : ''}"></span>`).join('');
   renderChoices(st);
   render();
-  announce((first ? `${S.lesson.title}. ${S.lesson.intro} ` : '') + st.goal, 'info', { noLive: true, short: st.goal });
+  announce((first ? `${S.lesson.title}. ${S.lesson.intro} ` : '') + st.goal, 'info', { noLive: true, short: st.goal, bar: `${S.lesson.title}: step ${S.step + 1} of ${S.lesson.steps.length}. The goal is below.` });
   focusLessonText();
 }
 function renderChoices(st) {
   const box = $('lcChoices');
-  box.innerHTML = ''; box.hidden = st.type !== 'choice';
+  box.innerHTML = '';
+  box.hidden = !(st.type === 'choice' || st.presets || st.settings);
+  // The main action comes first when the extras below it are optional.
+  if (st.presets) box.before($('lcNext')); else box.after($('lcNext'));
+  if (st.presets) {
+    box.innerHTML = '<p class="label" id="lcPresetL">Quick setup (optional)</p>';
+    const grp = document.createElement('div'); grp.className = 'presets'; grp.setAttribute('role', 'group'); grp.setAttribute('aria-labelledby', 'lcPresetL');
+    PRESETS.forEach(p => grp.appendChild(presetButton(p)));
+    box.appendChild(grp);
+  }
+  if (st.settings) renderTourSettings(box);
   if (st.type !== 'choice') return;
   st.choices.forEach(c => {
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'btn'; b.textContent = c.t;
     b.addEventListener('click', () => {
       if (S.awaitNext) return;
-      if (c.ok) { b.classList.add('right'); stepPassed(c.why); }
-      else { b.classList.add('wrong'); announce(`${c.why} Try again.`, 'error'); }
+      if (c.ok) { b.classList.add('right'); stepPassed(`Correct. ${c.why.replace(/^Yes\.\s*/, '')}`); }
+      else { b.classList.add('wrong'); announce(`Not quite. ${c.why} Try again.`, 'error'); }
     });
     box.appendChild(b);
   });
 }
-/* Moves on only when the learner chooses Next, so nobody is rushed and screen readers finish reading first. */
+/* Moves on only when the learner chooses Next, so nobody is rushed and screen readers finish reading first.
+   In the tour, focus stays where the learner is (often the board), and the message comes through the live region. */
 function stepPassed(text) {
   S.awaitNext = true; S.hint = null; S.selected = null;
   $('lcFeedback').textContent = text; $('lcFeedback').hidden = false;
   $('lcHint').hidden = true; $('lcIntro').hidden = true;
-  $('lcNext').textContent = S.step < S.lesson.steps.length - 1 ? 'Next step' : 'Finish lesson';
+  $('lcNext').textContent = nextLabel();
   $('lcNext').hidden = false;
   render();
+  if (inTour()) return announce(`${text} Choose Next step, or press N on the board, to carry on.`, 'success', { short: text });
   announce(text, 'success', { noLive: true });
-  focusLessonText();
+  focusLessonText('lcFeedback');
 }
 function findCheck(sq) {
+  if (S.awaitNext) return;
   const st = curStep();
-  if (sq === st.target) { S.hint = sq; S.focus = sq; stepPassed(`Yes, that is ${sq}. ${st.why}`); S.hint = sq; render(); }
-  else announce(`That is ${sq}. ${st.target} is ${dirText(sq, st.target)} from here.`, 'error');
+  if (sq === st.target) { S.focus = sq; stepPassed(`Correct, that is ${sq}. ${st.why}`); S.hint = sq; render(); }
+  else announce(`Not quite. That is ${sq}. ${st.target} is ${dirText(sq, st.target)} from here.`, 'error');
+}
+function tourEvent(kind) {
+  if (!inTour() || S.awaitNext) return;
+  const st = curStep();
+  if (st.type === 'do' && st.expect === kind) stepPassed(`Correct. ${st.why}`);
 }
 function lessonMove(from, to, promotion) {
   const st = curStep(), g = S.game, m = g.move({ from, to, promotion });
   if (!m) return announce('That move is not legal here.', 'error');
+  S.selected = null; S.hint = null;
+  if (st.typed && !S.typed) {
+    g.undo(); S.focus = from; render();
+    return announce(`That works, but this step is about typing. The ${NAMES[m.piece]} went back to ${from}. ${st.goal}`, 'error', { short: `Good, but try typing it this time. The ${NAMES[m.piece]} is back on ${from}.` });
+  }
   const mate = g.in_checkmate();
   const ok = st.type === 'mate' ? mate : st.type === 'check' ? g.in_check() : (from === st.from && to === st.to);
-  S.selected = null; S.hint = null;
   if (ok) {
     S.last = m; S.focus = to;
-    stepPassed(`${describeMove(m)} ${mate ? 'Checkmate! ' : ''}${st.why}`);
+    stepPassed(`Correct. ${describeMove(m)} ${mate ? 'Checkmate! ' : ''}${st.why}`);
     return;
   }
   g.undo(); S.last = null; S.focus = from; render();
-  announce(`${describeMove(m)} That is a legal move, but not the goal, so the piece went back to ${from}. ${st.goal}`, 'error', { short: `Not quite. The piece is back on ${from}. Try again.` });
+  if (st.type === 'do') return announce(`The ${NAMES[m.piece]} went back to ${from}. This step is not about moving. ${st.goal}`, 'error', { short: `The ${NAMES[m.piece]} went back to ${from}. Try the step again.` });
+  announce(`Not quite. ${describeMove(m)} That is a legal move, but not the goal, so the piece went back to ${from}. ${st.goal}`, 'error', { short: `Not quite. The piece is back on ${from}. Try again.` });
 }
 function nextStep() {
   if (!S.lesson || !S.awaitNext) return;
+  if (inTour() && isLastStep()) return finishTour(true);
   if (S.complete) {
     const nxt = LESSONS[LESSONS.indexOf(S.lesson) + 1];
     return nxt ? startLesson(nxt.id) : exitLesson();
   }
-  if (S.step < S.lesson.steps.length - 1) { S.step++; return loadStep(false); }
+  if (!isLastStep()) { S.step++; return loadStep(false); }
   done[S.lesson.id] = true; saveDone(); renderLessons();
   S.complete = true;
   const nxt = LESSONS[LESSONS.indexOf(S.lesson) + 1];
   $('lcEyebrow').textContent = 'Lesson complete';
   $('lcGoal').hidden = true; $('lcIntro').hidden = true;
-  $('lcFeedback').textContent = nxt ? `Well done. Next up: ${nxt.title}.` : 'You finished every lesson. Try a game against the computer.';
+  $('lcFeedback').textContent = `Lesson complete: ${S.lesson.title}. ${nxt ? `Next up: ${nxt.title}.` : 'You finished every lesson. Try a game against the computer.'}`;
   $('lcFeedback').hidden = false;
   $('lcSteps').innerHTML = S.lesson.steps.map(() => '<span class="on"></span>').join('');
   $('lcHint').hidden = true; $('lcRepeat').hidden = true; $('lcChoices').hidden = true;
   $('lcNext').textContent = nxt ? `Start: ${nxt.title}` : 'Back to lessons';
-  announce(`Lesson complete: ${S.lesson.title}. ${nxt ? 'Next up: ' + nxt.title + '.' : 'You finished every lesson.'}`, 'success', { noLive: true });
-  focusLessonText();
+  announce($('lcFeedback').textContent, 'success', { noLive: true });
+  focusLessonText('lcFeedback');
 }
 function hint() {
   if (!S.lesson) return announce('Hints are for lessons. In a game, pick up a piece to find out where it can go.', 'info');
-  if (S.awaitNext) return announce('Choose Next to carry on.', 'info');
+  if (S.awaitNext) return announce('Choose Next step to carry on.', 'info');
   const st = curStep();
   if (st.type === 'choice') return announce(`Read the question again: ${st.goal}`, 'info');
+  if (st.type === 'do') return announce(st.hint, 'info');
   if (st.type === 'find') {
     S.hint = st.target; render();
     const dir = dirText(S.focus, st.target);
     return announce(dir ? `${st.target} is ${dir} from ${S.focus}. It is now outlined on the board.` : `You are on ${st.target}. Select it.`, 'info');
   }
+  if (st.typed) return announce(`Go to the box called Type a move or command, type ${st.from} ${st.to}, and press Enter.`, 'info');
   if (S.selected !== st.from) {
     S.hint = st.from; render();
     const dir = dirText(S.focus, st.from);
@@ -508,14 +618,27 @@ function hint() {
   S.hint = st.to; render();
   announce(`Move it to ${st.to}, ${dirText(st.from, st.to)} from ${st.from}.`, 'info');
 }
-function exitLesson() {
-  clearPending();
+function leaveCourse() {
+  clearPending(); cancelAsk();
   S.lesson = null; S.awaitNext = false; S.complete = false; S.hint = null; S.selected = null;
   $('lessonCard').hidden = true;
   if (S.saved) { S.game = S.saved.game; S.last = S.saved.last; S.flipped = S.saved.flipped; S.saved = null; }
   buildBoard();
+}
+function exitLesson() {
+  if (inTour()) return finishTour(false);
+  leaveCourse();
   show('learn', true);
   announce('Left the lesson. Your game is still on the Play tab.', 'info');
+  maybeCpu();
+}
+function finishTour(completed) {
+  settings.onboarded = true; save();
+  leaveCourse();
+  show('play', false);
+  const back = S.tourReturn; S.tourReturn = null;
+  (back && document.contains(back) ? back : cells[S.focus]).focus();
+  announce(completed ? 'Tutorial finished. Your game is on the board. Open the tutorial again any time with How to use.' : 'Tutorial closed. Open it again any time with the How to use button at the top.', 'info');
   maybeCpu();
 }
 
@@ -525,6 +648,7 @@ function describeBoard() {
   for (const sq of SQUARES) { const p = g.get(sq); if (p) (out[p.color][p.type] = out[p.color][p.type] || []).push(sq); }
   const side = c => ['k', 'q', 'r', 'b', 'n', 'p'].filter(t => out[c][t]).map(t => { const l = out[c][t]; return `${l.length > 1 ? NAMES[t] + 's' : NAMES[t]} ${l.join(' ')}`; }).join('; ') || 'no pieces';
   announce(`White: ${side('w')}. Black: ${side('b')}. ${gameState().text}`, 'info', { short: 'Board described in Captions and read aloud.' });
+  tourEvent('board');
 }
 function describeLine(squares, name) {
   const found = squares.map(sq => [sq, S.game.get(sq)]).filter(x => x[1]).map(([sq, p]) => `${sq} ${pieceName(p)}`);
@@ -532,7 +656,11 @@ function describeLine(squares, name) {
 }
 const describeRank = r => describeLine([...FILES].map(f => f + r), `Rank ${r}`);
 const describeFile = f => describeLine([1, 2, 3, 4, 5, 6, 7, 8].map(r => f + r), `File ${f}`);
-function lastMove() { if (!S.last) return announce('No moves yet.', 'info'); announce('Last move: ' + describeMove(S.last), 'info'); }
+function lastMove() {
+  if (!S.last) return announce('No moves yet.', 'info');
+  announce('Last move: ' + describeMove(S.last), 'info');
+  tourEvent('last');
+}
 /* Which pieces of `color` bear on sq. Pins are ignored: a pinned piece still attacks. */
 function attackersOf(sq, color) {
   const g = S.game, tf = FILES.indexOf(sq[0]), tr = +sq[1], res = [];
@@ -559,9 +687,10 @@ function attackers(sq) {
 }
 function listMoves(sq) {
   const p = S.game.get(sq);
-  if (!p) return announce(`${sq} is empty.`, 'info');
+  if (!p) return announce(`${sq} is empty. Go to a square with a piece on it to hear its moves.`, 'info');
   const t = listTargets(sq);
   announce(`${cap(pieceName(p))} on ${sq}: ${t ? 'can go to ' + t : 'no legal moves'}${p.color !== S.game.turn() ? ' when it is ' + COLOR[p.color] + '\'s turn' : ''}.`, 'info');
+  tourEvent('moves');
 }
 function status() {
   const start = { p: 8, n: 2, b: 2, r: 2, q: 1, k: 1 }, left = { w: {}, b: {} };
@@ -589,31 +718,36 @@ function newGame() {
   announce(settings.opponent === 'cpu' ? 'New game. You play White against the computer. Your move.' : 'New game for two players. White moves first.', 'info');
 }
 const gameInProgress = () => !S.lesson && S.game.history().length > 0 && !S.game.game_over();
-async function confirmReplaceGame(title) {
+async function confirmReplaceGame(title, returnTo) {
   if (!gameInProgress()) return true;
-  const ok = await ask({ title, body: 'This ends the game you are playing. It cannot be brought back.', options: [{ label: 'Keep playing', value: false, primary: true }, { label: 'Yes, start a new game', value: true }] });
+  const ok = await ask({ title, body: 'This ends the game you are playing. It cannot be brought back.', returnTo, options: [{ label: 'Keep playing', value: false, primary: true }, { label: 'Yes, start a new game', value: true }] });
   return ok === true;
 }
-async function requestNewGame() { if (await confirmReplaceGame('Start a new game?')) newGame(); }
+async function requestNewGame() { if (await confirmReplaceGame('Start a new game?', $('bNew'))) newGame(); }
 function flip() {
   S.flipped = !S.flipped; buildBoard();
   announce(S.flipped ? 'Board flipped. Black is now at the bottom.' : 'Board flipped. White is now at the bottom.', 'info');
 }
-const HELP = 'Type a move like e4, Nf3 or e2 e4. Other commands: board, last, status, moves g1, attacks e4, rank 4, file e, about knight, undo, flip, new. In lessons: hint, next, repeat, leave.';
+const HELP = 'Type a move like e4, Nf3 or e2 e4. Other commands: board, last, status, moves g1, attacks e4, rank 4, file e, about knight, undo, flip, new, again, stop, speech on, speech off, tutorial. In lessons: hint, next, repeat, leave.';
 function runCommand(raw) {
   const t = raw.trim(), low = t.toLowerCase();
-  if (['board', 'describe', 'd'].includes(low)) return describeBoard();
+  if (['board', 'describe', 'd', 'b'].includes(low)) return describeBoard();
   if (['last', 'l'].includes(low)) return lastMove();
   if (['status', 'turn', 's'].includes(low)) return status();
   if (low === 'undo') return undo();
   if (low === 'flip') return flip();
   if (['help', '?'].includes(low)) return announce(HELP, 'info', { short: 'Commands are listed in Captions and on the Access tab.' });
   if (['hint', 'h'].includes(low)) return hint();
+  if (['again', 'say again', 'repeat last', 'p'].includes(low) || (low === 'repeat' && !S.lesson)) return repeatLast();
+  if (['stop', 'quiet', 'x'].includes(low)) return stopSpeech();
+  if (['speech on', 'speak'].includes(low)) return setSpeech(true);
+  if (['speech off', 'silent'].includes(low)) return setSpeech(false);
+  if (['tutorial', 'how to use', 'tour'].includes(low)) return startTour($('cmdInput'));
   if (['new', 'new game'].includes(low)) return S.lesson ? exitLesson() : requestNewGame();
   if (S.lesson) {
     if (['next', 'n'].includes(low)) return S.awaitNext ? nextStep() : announce('Finish this step first.', 'info');
     if (['repeat', 'goal'].includes(low)) return repeatGoal();
-    if (['leave', 'exit'].includes(low)) return exitLesson();
+    if (['leave', 'exit', 'skip'].includes(low)) return exitLesson();
   }
   let mm = low.match(/^moves?\s+([a-h][1-8])$/); if (mm) return listMoves(mm[1]);
   mm = low.match(/^attacks?\s+([a-h][1-8])$/); if (mm) return attackers(mm[1]);
@@ -621,7 +755,11 @@ function runCommand(raw) {
   mm = low.match(/^file\s+([a-h])$/); if (mm) return describeFile(mm[1]);
   mm = low.match(/^about\s+(pawn|knight|bishop|rook|queen|king)$/); if (mm) return aboutPiece(Object.keys(NAMES).find(k => NAMES[k] === mm[1]));
   if (/^[a-h][1-8]$/.test(low) && S.lesson && curStep().type === 'find' && !S.awaitNext) { setFocus(low, false, true); return findCheck(low); }
-  mm = low.match(/^([a-h][1-8])\s*(?:-|x|to|\s)?\s*([a-h][1-8])\s*=?([qrbn])?$/); if (mm) return tryMove(mm[1], mm[2], mm[3]);
+  S.typed = true;
+  try { return typedMove(t, low); } finally { S.typed = false; }
+}
+function typedMove(t, low) {
+  let mm = low.match(/^([a-h][1-8])\s*(?:-|x|to|\s)?\s*([a-h][1-8])\s*=?([qrbn])?$/); if (mm) return tryMove(mm[1], mm[2], mm[3]);
   // Pawn moves in plain text ("e4", "exd5", "e8") and piece moves in any case ("nf3", "O-O").
   const tmp = new Chess(S.game.fen());
   let m = tmp.move(t, { sloppy: true });
@@ -630,8 +768,8 @@ function runCommand(raw) {
   if (m) return tryMove(m.from, m.to, m.promotion);
   // "e8" with no piece named: a pawn reaching the far side, so the promotion question comes up.
   if (!/=/.test(t)) { m = tmp.move(t + '=Q', { sloppy: true }); if (m) return tryMove(m.from, m.to); }
-  if (/^[a-h][1-8]$/.test(low)) { setFocus(low, true, true); return announce(`${low}, ${pieceName(S.game.get(low))}.`, 'info'); }
   if (!S.lesson && S.game.game_over()) return announce(`The game is over. ${gameState().text} Type new to play again.`, 'info');
+  if (/^[a-h][1-8]$/.test(low)) { setFocus(low, true, true); return announce(`${low}, ${pieceName(S.game.get(low))}.`, 'info'); }
   announce(`I did not understand "${t}". ${HELP}`, 'error', { short: `I did not understand "${t}". Type help for the list.` });
 }
 function repeatGoal() { const st = S.lesson && curStep(); if (st) announce(st.goal, 'info'); }
@@ -655,19 +793,21 @@ document.querySelectorAll('nav.tabs button').forEach(b => {
 function renderLessons() {
   const box = $('lessons'), nextId = (LESSONS.find(l => !done[l.id]) || {}).id, finished = LESSONS.filter(l => done[l.id]).length;
   $('progress').textContent = finished === LESSONS.length ? `You finished all ${LESSONS.length} lessons.` : `${finished} of ${LESSONS.length} lessons finished.`;
+  $('progressBar').value = finished; $('progressBar').max = LESSONS.length;
   box.innerHTML = '';
   LESSONS.forEach((l, i) => {
-    const d = document.createElement('article'), isNext = l.id === nextId;
-    d.className = 'lesson' + (isNext ? ' next' : '');
+    const d = document.createElement('li'), isNext = l.id === nextId;
+    d.className = 'lesson' + (isNext ? ' next' : '') + (done[l.id] ? ' done' : '');
     const top = document.createElement('div'); top.className = 'top';
     const h = document.createElement('h3'); h.textContent = `${i + 1}. ${l.title}`;
-    const badge = document.createElement('span'); badge.className = 'badge' + (done[l.id] ? ' done' : ''); badge.textContent = done[l.id] ? 'Done' : plural(l.steps.length, 'step');
+    const badge = document.createElement('span'); badge.className = 'badge' + (done[l.id] ? ' done' : isNext ? ' next' : '');
+    badge.textContent = done[l.id] ? 'Done' : isNext ? 'Up next' : plural(l.steps.length, 'step');
     top.append(h, badge);
     const p = document.createElement('p'); p.textContent = l.intro;
     const b = document.createElement('button');
     b.className = 'btn' + (isNext ? ' primary' : ''); b.type = 'button';
     b.textContent = done[l.id] ? 'Practise again' : isNext ? 'Start here' : 'Start lesson';
-    b.setAttribute('aria-label', `${b.textContent}: ${l.title}`);
+    b.setAttribute('aria-label', `${b.textContent}: ${l.title}${done[l.id] ? ', done' : ''}`);
     b.addEventListener('click', () => startLesson(l.id));
     d.append(top, p, b); box.appendChild(d);
   });
@@ -681,7 +821,7 @@ function renderFeel() {
     b.innerHTML = `<span class="swatch">${pieceSvg(t, 'w')}</span><strong><span>${cap(NAMES[t])}</span><span class="buzz" aria-hidden="true">${i.mark}</span></strong><small>${i.points}. ${i.how}</small>`;
     b.setAttribute('aria-label', `${NAMES[t]}, ${i.points}. ${i.how} Vibration: ${i.buzz}.`);
     b.addEventListener('click', () => {
-      announce(`${cap(NAMES[t])}, ${i.points}. ${i.how}${CAN_VIBRATE ? ` Vibration: ${i.buzz}.` : ''}`, 'info', { haptic: PAT[t], forceHaptic: true, forceSpeech: true, short: `${cap(NAMES[t])}: ${i.points}, vibration ${i.buzz}.` });
+      announce(`${cap(NAMES[t])}, ${i.points}. ${i.how}${CAN_VIBRATE ? ` Vibration: ${i.buzz}.` : ''}`, 'info', { haptic: PAT[t], forceHaptic: true, short: `${cap(NAMES[t])}: ${i.points}, vibration ${i.buzz}.` });
     });
     box.appendChild(b);
   });
@@ -696,72 +836,143 @@ const PRESETS = [
 ];
 function applyPreset(p) {
   Object.assign(settings, p.set, { onboarded: true }); save();
-  renderOpts(); applySettings();
+  syncControls(); applySettings();
   announce(`Set up: ${p.label}. You can change anything on the Access tab.`, 'success', { forceSpeech: p.id === 'voice' });
 }
-function renderPresets() {
-  const box = $('presets'); box.innerHTML = '';
-  PRESETS.forEach(p => {
-    const b = document.createElement('button');
-    b.type = 'button'; b.className = 'btn'; b.textContent = p.label;
-    const s = document.createElement('small'); s.textContent = p.detail; b.appendChild(s);
-    b.addEventListener('click', () => applyPreset(p));
-    box.appendChild(b);
+function presetButton(p) {
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'btn'; b.textContent = p.label;
+  const s = document.createElement('small'); s.textContent = p.detail; b.appendChild(s);
+  b.addEventListener('click', () => applyPreset(p));
+  return b;
+}
+function renderPresets() { const box = $('presets'); box.innerHTML = ''; PRESETS.forEach(p => box.appendChild(presetButton(p))); }
+
+const GROUPS = [['hear', 'Speech and sound'], ['see', 'Seeing'], ['touch', 'Touch'], ['messages', 'Messages and comfort'], ['game', 'Game']];
+const TEXT_SIZES = [['normal', 'Normal'], ['large', 'Large'], ['xlarge', 'Extra large'], ['huge', 'Largest']];
+const OPTS = [
+  { k: 'speech', g: 'hear', t: 'App speech', d: 'Reads every message aloud with your device\'s voice. It starts off each time you open the app, so nothing talks until you choose. Leave it off if you use VoiceOver, TalkBack, NVDA or JAWS, which already read everything. You can also use the Speech button at the top.', tags: ['Blind', 'Low vision', 'Reading support'] },
+  { k: 'voice', g: 'hear', type: 'voice', t: 'Voice', d: 'Which of your device\'s voices reads aloud. Some devices have more voices in their own speech settings.', tags: ['Blind', 'Low vision'] },
+  { k: 'rate', g: 'hear', type: 'range', min: 0.6, max: 1.8, step: 0.1, t: 'Voice speed', d: 'How fast the voice talks. 1 is normal.', vt: v => `${(+v).toFixed(1)} times normal speed`, show: v => `${(+v).toFixed(1)}×`, tags: ['Blind', 'Processing'] },
+  { k: 'volume', g: 'hear', type: 'range', min: 0.1, max: 1, step: 0.1, t: 'Voice volume', d: 'How loud the voice is, compared with your device volume.', vt: v => `${Math.round(v * 100)} percent`, show: v => `${Math.round(v * 100)}%`, tags: ['Blind', 'Hard of hearing'] },
+  { k: 'sound', g: 'hear', t: 'Square tones and alert sounds', d: 'Each rank plays a higher note, from rank 1 low to rank 8 high. Files pan from your left ear (a) to your right ear (h). Squares with a piece sound brighter. Calm mode turns these off.', tags: ['Blind'] },
+  { k: 'textSize', g: 'see', type: 'select', t: 'Text size', d: 'Makes all the text in the app larger. Your browser zoom works too.', tags: ['Low vision'], choices: TEXT_SIZES },
+  { k: 'contrast', g: 'see', t: 'High contrast', d: 'Pure black and white everywhere, thick borders, and yellow and deep blue squares. Follows your light or dark choice.', tags: ['Low vision'] },
+  { k: 'theme', g: 'see', type: 'select', t: 'Light or dark', d: 'Device setting follows your phone or computer.', tags: ['Low vision', 'Sensory sensitivity'], choices: [['auto', 'Device setting'], ['light', 'Light'], ['dark', 'Dark']] },
+  { k: 'letters', g: 'see', t: 'Letters instead of piece shapes', d: 'Shows K, Q, R, B, N and P in bold circles. White pieces are white circles, black pieces are black circles.', tags: ['Low vision', 'Learning'] },
+  { k: 'coords', g: 'see', t: 'Square names on every square', d: 'Prints e4, f5 and so on in the corner of each square, so you never have to count.', tags: ['Learning', 'Low vision'] },
+  { k: 'hints', g: 'see', t: 'Show where a piece can go', d: 'After you pick up a piece, its legal squares get a dot, and captures get a dashed ring.', tags: ['Learning'] },
+  { k: 'haptics', g: 'touch', t: 'Vibration patterns', d: 'Feel each piece: pawn 1 short, knight 2 short, bishop 3 short, rook 1 long, queen 2 long, king 3 long. Check is a strong double buzz.' + (CAN_VIBRATE ? '' : ' This device cannot vibrate from a web page, so this has no effect here.'), tags: ['Deafblind', 'Blind'] },
+  { k: 'explore', g: 'touch', t: 'Explore by dragging a finger', d: 'Slide a finger over the board to feel, hear and read each square without picking anything up. Tap to select. The page will not scroll while your finger is on the board. Not needed with VoiceOver or TalkBack, which do this already.', tags: ['Deafblind', 'Blind', 'Low vision'] },
+  { k: 'brief', g: 'messages', t: 'Short messages', d: 'Keeps spoken and braille messages to the point. Everything in full is still in Captions.', tags: ['Braille', 'Processing'] },
+  { k: 'flash', g: 'messages', t: 'Visual alerts', d: 'Check and checkmate light up the board edge. The message bar at the top changes for every alert, and every sound is written in Captions.', tags: ['Deaf', 'Hard of hearing'] },
+  { k: 'calm', g: 'messages', t: 'Calm mode', d: 'Softer colours, no flashing, no tones, slower voice and a slower computer opponent.', tags: ['Sensory sensitivity', 'Autism', 'ADHD'] },
+  { k: 'cpu', g: 'game', type: 'select', t: 'Computer strength', d: 'Gentle mostly plays at random. Thinking looks two moves ahead and keeps its pieces safe.', tags: ['Everyone'], choices: [['gentle', 'Gentle'], ['think', 'Thinking']] }
+];
+function control(o, id) {
+  const v = settings[o.k];
+  if (o.type === 'range') return `<span class="range"><input type="range" id="${id}" min="${o.min}" max="${o.max}" step="${o.step}" value="${v}" aria-describedby="${id}-d" aria-valuetext="${o.vt(v)}"><output for="${id}" id="${id}-o" aria-hidden="true">${o.show(v)}</output></span>`;
+  if (o.type === 'select') return `<select id="${id}" aria-describedby="${id}-d">${o.choices.map(([cv, l]) => `<option value="${cv}"${v === cv ? ' selected' : ''}>${l}</option>`).join('')}</select>`;
+  if (o.type === 'voice') return `<select id="${id}" aria-describedby="${id}-d" data-voice></select>`;
+  return `<span class="switch"><input type="checkbox" role="switch" id="${id}" aria-describedby="${id}-d"${v ? ' checked' : ''}><span></span></span>`;
+}
+function wireControl(o, el) {
+  el.addEventListener(o.type === 'range' ? 'input' : 'change', () => {
+    const v = o.type === 'range' ? +el.value : (o.type === 'select' || o.type === 'voice') ? el.value : el.checked;
+    setOpt(o.k, v);
+    if (o.k === 'haptics' && v) buzz(PAT.n);
+    if (o.k === 'sound' && v) tone('e4', true);
+    if (o.k === 'rate' || o.k === 'volume' || o.k === 'voice') { clearTimeout(wireControl.t); wireControl.t = setTimeout(() => say('This is how the voice sounds.', true), 250); }
   });
 }
-const OPTS = [
-  { k: 'speech', t: 'Speak announcements aloud', d: 'Uses your device\'s own voice. Leave this off if you already use VoiceOver or TalkBack, which read everything for you.', tags: ['Blind', 'Low vision', 'Reading support'] },
-  { k: 'rate', type: 'range', t: 'Voice speed', d: 'How fast the voice talks.', tags: ['Blind', 'Processing'] },
-  { k: 'sound', t: 'Square tones and alert sounds', d: 'Each rank plays a higher note, from rank 1 low to rank 8 high. Files pan from your left ear (a) to your right ear (h). Squares with a piece sound brighter. Calm mode turns these off.', tags: ['Blind'] },
-  { k: 'haptics', t: 'Vibration patterns', d: 'Feel each piece: pawn 1 short, knight 2 short, bishop 3 short, rook 1 long, queen 2 long, king 3 long. Check is a strong double buzz.' + (CAN_VIBRATE ? '' : ' This device cannot vibrate from a web page, so this has no effect here.'), tags: ['Deafblind', 'Blind'] },
-  { k: 'explore', t: 'Explore by dragging a finger', d: 'Slide a finger over the board to feel, hear and read each square without picking anything up. Tap to select. The page will not scroll while your finger is on the board. Not needed with VoiceOver or TalkBack, which do this already.', tags: ['Deafblind', 'Blind', 'Low vision'] },
-  { k: 'brief', t: 'Short messages', d: 'Keeps spoken and braille messages to the point. Everything in full is still in Captions.', tags: ['Braille', 'Processing'] },
-  { k: 'flash', t: 'Visual alerts', d: 'Check and checkmate light up the board edge. The banner at the top changes for every alert, and every sound is written in Captions.', tags: ['Deaf', 'Hard of hearing'] },
-  { k: 'contrast', t: 'High contrast', d: 'Yellow and deep blue squares, with stronger borders and text everywhere.', tags: ['Low vision'] },
-  { k: 'letters', t: 'Letters instead of piece shapes', d: 'Shows K, Q, R, B, N and P in bold circles. White pieces are white circles, black pieces are black circles.', tags: ['Low vision', 'Learning'] },
-  { k: 'coords', t: 'Square names on every square', d: 'Prints e4, f5 and so on in the corner of each square, so you never have to count.', tags: ['Learning', 'Low vision'] },
-  { k: 'hints', t: 'Show where a piece can go', d: 'After you pick up a piece, its legal squares get a dot, and captures get a dashed ring.', tags: ['Learning'] },
-  { k: 'calm', t: 'Calm mode', d: 'Softer colours, no flashing, no tones, slower voice and a slower computer opponent.', tags: ['Sensory sensitivity', 'Autism', 'ADHD'] },
-  { k: 'textSize', type: 'select', t: 'Text size', d: 'Makes all the text in the app larger.', tags: ['Low vision'], choices: [['normal', 'Normal'], ['large', 'Large'], ['xlarge', 'Extra large']] },
-  { k: 'theme', type: 'select', t: 'Light or dark', d: 'Device setting follows your phone or computer.', tags: ['Low vision', 'Sensory sensitivity'], choices: [['auto', 'Device setting'], ['light', 'Light'], ['dark', 'Dark']] },
-  { k: 'cpu', type: 'select', t: 'Computer strength', d: 'Gentle mostly plays at random. Thinking looks two moves ahead and keeps its pieces safe.', tags: ['Everyone'], choices: [['gentle', 'Gentle'], ['think', 'Thinking']] }
-];
 function renderOpts() {
   const box = $('opts'); box.innerHTML = '';
-  OPTS.forEach(o => {
-    const d = document.createElement('div'); d.className = 'opt';
-    const id = 'opt-' + o.k; let ctl;
-    if (o.type === 'range') ctl = `<input type="range" id="${id}" min="0.6" max="1.6" step="0.1" value="${settings.rate}" aria-describedby="${id}-d" aria-valuetext="${settings.rate} times normal speed">`;
-    else if (o.type === 'select') ctl = `<select id="${id}" aria-describedby="${id}-d">${o.choices.map(([v, l]) => `<option value="${v}"${settings[o.k] === v ? ' selected' : ''}>${l}</option>`).join('')}</select>`;
-    else ctl = `<span class="switch"><input type="checkbox" role="switch" id="${id}" aria-describedby="${id}-d"${settings[o.k] ? ' checked' : ''}><span></span></span>`;
-    d.innerHTML = `<h3><label for="${id}">${o.t}</label></h3>${ctl}<p id="${id}-d">${o.d}</p><ul class="tags" aria-label="Helps with">${o.tags.map(t => `<li class="tag">${t}</li>`).join('')}</ul>`;
-    box.appendChild(d);
-    const el = $(id);
-    el.addEventListener(o.type === 'range' ? 'input' : 'change', () => {
-      settings[o.k] = o.type === 'range' ? +el.value : o.type === 'select' ? el.value : el.checked;
-      save(); applySettings();
-      if (o.type === 'range') el.setAttribute('aria-valuetext', `${el.value} times normal speed`);
-      if (o.k === 'haptics' && el.checked) buzz(PAT.n);
-      if (o.k === 'sound' && el.checked) tone('e4', true);
-      if (o.k === 'speech' && el.checked) say('Speech is on.', true);
-      if (o.k === 'rate') say('This is the voice speed.', true);
-    });
-  });
-  const tests = document.createElement('div'); tests.className = 'actions';
-  tests.innerHTML = '<button class="btn" type="button" id="tVib">Test vibration</button><button class="btn" type="button" id="tVoice">Test voice</button><button class="btn" type="button" id="tTone">Test tones</button>';
-  box.appendChild(tests);
+  for (const [gid, gname] of GROUPS) {
+    const sec = document.createElement('section'); sec.className = 'opt-group'; sec.setAttribute('aria-labelledby', 'grp-' + gid);
+    sec.innerHTML = `<h3 id="grp-${gid}">${gname}</h3>`;
+    const list = document.createElement('div'); list.className = 'opt-list';
+    for (const o of OPTS.filter(x => x.g === gid)) {
+      const id = 'opt-' + o.k, d = document.createElement('div'); d.className = 'opt';
+      d.innerHTML = `<div class="opt-head"><label for="${id}">${o.t}</label>${control(o, id)}</div><p id="${id}-d">${o.d}</p><ul class="tags" aria-label="Helps with">${o.tags.map(t => `<li class="tag">${t}</li>`).join('')}</ul>`;
+      list.appendChild(d);
+      wireControl(o, d.querySelector('#' + id));
+    }
+    sec.appendChild(list);
+    if (gid === 'hear') {
+      const tests = document.createElement('div'); tests.className = 'actions';
+      tests.innerHTML = '<button class="btn" type="button" id="tVoice">Test voice</button><button class="btn" type="button" id="tTone">Test tones</button><button class="btn" type="button" id="tVib">Test vibration</button>';
+      sec.appendChild(tests);
+    }
+    box.appendChild(sec);
+  }
+  fillVoices();
   $('tVib').onclick = () => {
     if (!CAN_VIBRATE) return announce('This device or browser cannot vibrate from a web page.', 'error');
     buzz(PAT.check, true); announce('Vibration sent. You should feel a strong double buzz.', 'info');
   };
   $('tVoice').onclick = () => {
-    if (!('speechSynthesis' in window)) return announce('This browser has no voice available.', 'error');
+    if (!HAS_SPEECH) return announce('This browser has no voice available. See "If the app\'s speech does not work" below.', 'error');
     say('Knight from g1 to f3. Black to move.', true); banner.textContent = 'Voice test: Knight from g1 to f3. Black to move.'; banner.dataset.level = 'info';
   };
   $('tTone').onclick = () => {
     ['a1', 'c3', 'e5', 'h8'].forEach((s, i) => setTimeout(() => tone(s, i % 2, true), i * 260));
     banner.textContent = 'Tone test: a1, c3, e5, h8. The notes climb and move from left to right.'; banner.dataset.level = 'info';
   };
+}
+function fillVoices() {
+  document.querySelectorAll('select[data-voice]').forEach(sel => {
+    const lang = (document.documentElement.lang || 'en').slice(0, 2);
+    const mine = voices.filter(v => (v.lang || '').toLowerCase().startsWith(lang));
+    const list = mine.length ? mine : voices;
+    sel.innerHTML = '<option value="">Device default</option>' + list.map(v => `<option value="${v.voiceURI.replace(/"/g, '&quot;')}">${v.name.replace(/</g, '&lt;')} (${v.lang})</option>`).join('');
+    sel.value = list.some(v => v.voiceURI === settings.voice) ? settings.voice : '';
+    sel.disabled = !HAS_SPEECH;
+  });
+}
+/* The tour's own small settings panel. Changes are confirmed in the message bar, Captions and speech. */
+function renderTourSettings(box) {
+  const wrap = document.createElement('div'); wrap.className = 'tour-settings';
+  wrap.innerHTML =
+    `<div class="opt-head"><label for="ts-speech">App speech</label>${control({ k: 'speech' }, 'ts-speech')}</div>` +
+    `<div class="opt-head"><label for="ts-textSize">Text size</label>${control(OPTS.find(o => o.k === 'textSize'), 'ts-textSize')}</div>` +
+    `<div class="opt-head"><label for="ts-contrast">High contrast</label>${control({ k: 'contrast' }, 'ts-contrast')}</div>` +
+    `<div class="opt-head"><label for="ts-rate">Voice speed</label>${control(OPTS.find(o => o.k === 'rate'), 'ts-rate')}</div>`;
+  wrap.querySelectorAll('[aria-describedby]').forEach(el => el.removeAttribute('aria-describedby'));
+  box.appendChild(wrap);
+  const confirm = { textSize: v => `Text size is now ${TEXT_SIZES.find(x => x[0] === v)[1]}.`, contrast: v => `High contrast is ${v ? 'on' : 'off'}.`, rate: v => `Voice speed is ${(+v).toFixed(1)}.` };
+  for (const k of ['speech', 'textSize', 'contrast', 'rate']) {
+    const el = $('ts-' + k), o = OPTS.find(x => x.k === k);
+    el.addEventListener(o.type === 'range' ? 'change' : 'change', () => {
+      const v = o.type === 'range' ? +el.value : o.type === 'select' ? el.value : el.checked;
+      setOpt(k, v);
+      if (confirm[k]) announce(`${confirm[k](v)} Choose Next step when you are happy.`, 'success', { noLive: true, short: confirm[k](v) });
+      if (k === 'rate') say('This is how the voice sounds.', true);
+    });
+  }
+}
+function setOpt(k, v) {
+  if (k === 'speech') return setSpeech(v);
+  settings[k] = v; save(); applySettings(); syncControls();
+}
+/* Keeps every copy of a setting (Access tab, tour, header) showing the same value. */
+function syncControls() {
+  for (const o of OPTS) for (const id of ['opt-' + o.k, 'ts-' + o.k]) {
+    const el = $(id); if (!el) continue;
+    const v = settings[o.k];
+    if (el.type === 'checkbox') el.checked = !!v;
+    else if (el.dataset.voice !== undefined) el.value = voices.some(x => x.voiceURI === v) ? v : '';
+    else if (String(el.value) !== String(v)) el.value = v;
+    if (o.type === 'range') { el.setAttribute('aria-valuetext', o.vt(v)); const out = $(id + '-o'); if (out) out.textContent = o.show(v); }
+  }
+  const b = $('bSpeech');
+  b.setAttribute('aria-pressed', settings.speech ? 'true' : 'false');
+  $('bSpeechState').textContent = settings.speech ? 'On' : 'Off';
+  $('bStop').hidden = !settings.speech;
+}
+function setSpeech(on) {
+  settings.speech = !!on; save(); syncControls();
+  if (on) announce('App speech is on. Press X to stop it talking, or the Speech button to turn it off.', 'info', { noLive: true, forceSpeech: true, short: 'App speech is on.' });
+  else { stopSpeech(true); announce('App speech is off. Screen readers keep working as normal.', 'info', { noLive: true, speak: false, short: 'App speech is off.' }); }
 }
 function applySettings() {
   document.body.classList.toggle('contrast', settings.contrast);
@@ -802,9 +1013,13 @@ boardEl.addEventListener('keydown', e => {
   if (k === 'ArrowUp') r += d; else if (k === 'ArrowDown') r -= d; else if (k === 'ArrowRight') f += d; else if (k === 'ArrowLeft') f -= d;
   else if (k === 'Home') f = S.flipped ? 7 : 0; else if (k === 'End') f = S.flipped ? 0 : 7;
   else if (k === 'Enter' || k === ' ') { e.preventDefault(); return activate(S.focus); }
-  else if (k === 'Escape') { if (S.selected) { S.selected = null; render(); announce('Piece put back.', 'info'); } return; }
-  else {
-    const fn = { m: () => listMoves(S.focus), a: () => attackers(S.focus), d: describeBoard, l: lastMove, h: hint, r: () => describeRank(S.focus[1]), f: () => describeFile(S.focus[0]), s: status, n: nextStep }[k.toLowerCase()];
+  else if (k === 'Escape') {
+    stopSpeech(true);
+    if (askFinish) return askFinish(null, true);
+    if (S.selected) { S.selected = null; render(); announce('Piece put back.', 'info'); }
+    return;
+  } else {
+    const fn = { m: () => listMoves(S.focus), a: () => attackers(S.focus), b: describeBoard, d: describeBoard, l: lastMove, h: hint, r: () => describeRank(S.focus[1]), f: () => describeFile(S.focus[0]), s: status, n: nextStep, p: repeatLast, x: () => stopSpeech() }[k.toLowerCase()];
     if (fn) { e.preventDefault(); fn(); }
     return;
   }
@@ -813,18 +1028,24 @@ boardEl.addEventListener('keydown', e => {
   setFocus(FILES[f] + r, true, true);
 });
 $('skipBoard').addEventListener('click', e => { e.preventDefault(); show('play', false); cells[S.focus].focus(); });
+$('skipMain').addEventListener('click', e => { e.preventDefault(); $('main').focus(); });
 $('cmdForm').addEventListener('submit', e => { e.preventDefault(); const v = $('cmdInput').value; if (!v.trim()) return; $('cmdInput').value = ''; runCommand(v); });
 $('bDescribe').onclick = describeBoard; $('bLast').onclick = lastMove; $('bUndo').onclick = undo;
 $('bFlip').onclick = flip;
 $('bNew').onclick = requestNewGame;
+$('bRepeat').onclick = repeatLast;
+$('bStop').onclick = () => stopSpeech();
+$('bSpeech').onclick = () => setSpeech(!settings.speech);
+$('bTour').onclick = () => startTour($('bTour'));
 document.querySelectorAll('input[name=opp]').forEach(r => r.addEventListener('change', async () => {
   const value = r.value;
   applySettings();  // keep the old choice showing until the switch is confirmed
-  if (!await confirmReplaceGame('Change opponent?')) return;
+  if (!await confirmReplaceGame('Change opponent?', r)) return;
   settings.opponent = value; save(); applySettings(); newGame();
 }));
 $('lcHint').onclick = hint; $('lcRepeat').onclick = repeatGoal;
 $('lcExit').onclick = exitLesson; $('lcNext').onclick = nextStep;
+$('lcHelpBody').innerHTML = $('speechHelpBody').innerHTML;
 
 function restoreGame() {
   let pgn = null;
@@ -836,19 +1057,13 @@ function restoreGame() {
   S.game = g; S.last = h[h.length - 1];
   return true;
 }
-async function firstRun() {
-  const choice = await ask({
-    title: 'Welcome. How would you like to play?',
-    body: 'Pick the closest match. You can change anything later on the Access tab.',
-    options: PRESETS.map(p => ({ label: p.label, detail: p.detail, value: p })).concat({ label: 'Just show me the board', value: 'none' })
-  });
-  if (choice && choice !== 'none') return applyPreset(choice);
-  settings.onboarded = true; save();
-  banner.textContent = 'You play White. Tap a piece, or type a move like e4.';
-}
+
+/* The message bar sticks to the top, so anything scrolled into view keeps clear of it. */
+if ('ResizeObserver' in window) new ResizeObserver(([e]) => document.documentElement.style.setProperty('--bar-h', Math.ceil(e.contentRect.height) + 'px')).observe(document.querySelector('.banner-bar'));
 
 const resumed = restoreGame();
-buildBoard(); renderLessons(); renderFeel(); renderPresets(); renderOpts(); applySettings();
+buildBoard(); renderLessons(); renderFeel(); renderPresets(); renderOpts(); applySettings(); syncControls();
+if (HAS_SPEECH) { loadVoices(); try { speechSynthesis.addEventListener('voiceschanged', loadVoices); } catch (e) {} }
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
 if (resumed) {
   const st = gameState();
@@ -856,5 +1071,5 @@ if (resumed) {
   logAdd(`Welcome back. Your game was saved. ${describeMove(S.last)} ${st.text}`, 'info');
   maybeCpu();
 } else logAdd('Welcome. You play White. Tap a piece, use the arrow keys, or type a move like e4.', 'info');
-if (!settings.onboarded) firstRun();
+if (!settings.onboarded) startTour(null);
 })();

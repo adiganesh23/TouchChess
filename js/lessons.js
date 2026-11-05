@@ -7,7 +7,8 @@
      check   Play any move that gives check. `from`/`to` is the move the hint suggests.
      choice  Answer a question. Each choice has text `t`, `ok` for the right answer, and `why`.
              The board stays explorable while the question is open.
-   `goal` is the instruction and `why` is what the learner is told after getting it right.
+   `goal` is the instruction and `why` is what the learner is told after getting it right ("Correct." is added
+   in front). A choice's `why` is told after "Correct." or "Not quite.".
    tests/test_app.py replays every step, so a position or answer that does not work fails the tests. */
 const TPC_START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
@@ -80,7 +81,7 @@ const TPC_LESSONS = [
       {
         type: 'choice', fen: TPC_START, goal: 'Which is worth more?',
         choices: [
-          { t: 'A rook, 5 points', ok: true, why: 'Yes. A rook is 5 points and a knight is 3.' },
+          { t: 'A rook, 5 points', ok: true, why: 'A rook is 5 points and a knight is 3.' },
           { t: 'A knight, 3 points', why: 'A knight is 3 points, but a rook is 5.' }
         ]
       },
@@ -88,8 +89,8 @@ const TPC_LESSONS = [
       {
         type: 'choice', fen: '7k/8/8/3p4/4p3/5P2/8/4K3 w - - 0 1', goal: 'Your pawn on f3 can capture the pawn on e4, but a black pawn on d5 guards e4. If you capture and Black captures back, what happens?',
         choices: [
-          { t: 'A fair trade: one pawn each', ok: true, why: 'Yes. You each lose one pawn. Always check whether a piece is guarded before you take it.' },
-          { t: 'I win a pawn for free', why: 'Not this time. The pawn on d5 can capture back, so you lose your pawn too.' }
+          { t: 'A fair trade: one pawn each', ok: true, why: 'You each lose one pawn. Always check whether a piece is guarded before you take it.' },
+          { t: 'I win a pawn for free', why: 'The pawn on d5 can capture back, so you lose your pawn too.' }
         ]
       }
     ]
@@ -113,21 +114,38 @@ const TPC_LESSONS = [
     ]
   },
   {
+    id: 'tactics', title: 'Simple tactics', tag: 'Winning pieces',
+    intro: 'A tactic is a short trick that wins something. Four to know: take pieces nobody guards, attack two things at once, pin a piece to its king, and attack a big piece so the one behind it falls.',
+    steps: [
+      { fen: '7k/8/7p/4b1p1/8/5N2/8/4K3 w - - 0 1', from: 'f3', to: 'e5', goal: 'Your knight on f3 can take the bishop on e5 or the pawn on g5. The pawn on h6 guards g5. Nothing guards e5. Take the free piece.', why: 'Nothing guarded the bishop, so you won 3 points for free. An unguarded piece is called hanging.' },
+      { fen: 'r3k3/8/8/1N6/8/8/8/4K3 w - - 0 1', from: 'b5', to: 'c7', goal: 'The black king is on e8 and a black rook is on a8. Move your knight from b5 to c7 to attack both at once.', why: 'The knight checks the king and attacks the rook. That is a fork. Black must save the king, so you take the rook next.' },
+      { fen: '4k3/3n4/8/8/8/8/8/4KB2 w - - 0 1', from: 'f1', to: 'b5', goal: 'The black knight on d7 stands in front of its king on e8. Move your bishop from f1 to b5, on the same diagonal as both.', why: 'That is a pin. If the knight moves, its king would be in check, so it is stuck.' },
+      { fen: '8/8/8/8/q2k4/8/8/6KR w - - 0 1', from: 'h1', to: 'h4', goal: 'The black king is on d4 and the black queen is behind it on a4, all on rank 4. Move your rook from h1 to h4 to check the king along that rank.', why: 'That is a skewer. The king must step off rank 4, and then your rook takes the queen behind it.' },
+      {
+        type: 'choice', fen: 'r3k3/2N5/8/8/8/8/8/4K3 b - - 0 1', goal: 'Your knight on c7 attacks the king on e8 and the rook on a8 at the same time. What is this called?',
+        choices: [
+          { t: 'A fork', ok: true, why: 'One piece attacking two things at once is a fork. Knights are great at them.' },
+          { t: 'A skewer', why: 'A skewer attacks two pieces on the same line, one behind the other. Here the knight jumps to two different targets, so it is a fork.' }
+        ]
+      }
+    ]
+  },
+  {
     id: 'draws', title: 'Stalemate and draws', tag: 'When nobody wins',
     intro: 'If a player is not in check but has no legal move, that is stalemate, and the game is a draw. A nearly won game can slip away this way. Games are also drawn when too few pieces remain to checkmate.',
     steps: [
       {
         type: 'choice', state: 'stalemate', fen: 'k7/2Q5/1K6/8/8/8/8/8 b - - 0 1', goal: 'Black to move. King on a8. White has a queen on c7 and a king on b6. The black king is not attacked, but every square it could go to is. What is this?',
         choices: [
-          { t: 'Checkmate', why: 'Not quite. Checkmate needs the king to be attacked, and this one is not.' },
-          { t: 'Stalemate, a draw', ok: true, why: 'Yes. Black has no legal move and is not in check, so nobody wins.' }
+          { t: 'Checkmate', why: 'Checkmate needs the king to be attacked, and this one is not.' },
+          { t: 'Stalemate, a draw', ok: true, why: 'Black has no legal move and is not in check, so nobody wins.' }
         ]
       },
       {
         type: 'choice', state: 'checkmate', fen: 'k7/1Q6/1K6/8/8/8/8/8 b - - 0 1', goal: 'Now the white queen is on b7, next to the black king on a8, and the white king guards the queen. What is this?',
         choices: [
-          { t: 'Checkmate', ok: true, why: 'Yes. The king is attacked, cannot capture the guarded queen, and has nowhere to go.' },
-          { t: 'Stalemate, a draw', why: 'Not this time. The queen is attacking the king, so this is check with no way out.' }
+          { t: 'Checkmate', ok: true, why: 'The king is attacked, cannot capture the guarded queen, and has nowhere to go.' },
+          { t: 'Stalemate, a draw', why: 'The queen is attacking the king, so this is check with no way out.' }
         ]
       }
     ]
@@ -152,3 +170,28 @@ const TPC_LESSONS = [
     ]
   }
 ];
+
+/* The "How to use" tour. It runs on the real board like a lesson, but each step checks that the
+   learner did one thing the app can do. Extra step types:
+     info      Read, then choose Next. `presets: true` offers the quick setups; `settings: true` shows
+               speech, text size and contrast controls.
+     do        Do the action named by `expect`: board (B), last (L), moves (M) or repeat (P).
+     find      As in lessons. In the tour, arriving on the square counts, so arrow keys are enough.
+     move      As in lessons. `typed: true` means the move must be typed in the command box.
+   `pre` lists moves played after loading `fen`, so the last move is known. */
+const TPC_TOUR = {
+  id: 'tour', title: 'How to use Touchpoint', tag: 'How to use', tour: true,
+  intro: 'This short tour shows you how the app works. You try each thing yourself and the tour tells you when it worked. It takes about three minutes. Skip it any time, and open it again with the How to use button at the top.',
+  steps: [
+    { type: 'info', presets: true, fen: TPC_START, goal: 'If you use a screen reader such as VoiceOver, TalkBack, NVDA or JAWS, keep it on. The app is built to work with it. You can pick a quick setup below, or just choose Next step.' },
+    { type: 'find', start: 'e2', fen: TPC_START, target: 'e4', goal: 'Moving around. Go to the board and move to the square e4. Keyboard: press Tab until you reach the board, then use the arrow keys. Each square says its name and what is on it, like "e2, white pawn". Touch: tap e4. Screen reader on a phone: swipe until you hear e4, then double-tap.', why: 'You found e4. Letters are files, a to h from left to right. Numbers are ranks, 1 to 8 going away from you.' },
+    { fen: TPC_START, from: 'e2', to: 'e4', goal: 'Pick up and drop. Go to the white pawn on e2 and press Enter or Space to pick it up. Touch: tap it. You will hear where it can go. Then go to e4 and press Enter again to drop it there. To put a piece back, press Escape.', why: 'That is how every move is made: pick up, then drop.' },
+    { fen: 'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 2', from: 'g1', to: 'f3', typed: true, goal: 'Type a move. Black answered with a pawn to e5. Go to the box called "Type a move or command", type Nf3 and press Enter. That means knight to f3. Typing g1 f3 works too.', why: 'Typing works with braille displays and voice dictation as well.' },
+    { type: 'do', start: 'f1', expect: 'board', fen: TPC_START, pre: ['e4', 'e5', 'Nf3', 'Nc6'], goal: 'Hear the board. Go back to the board and press B. You will hear where every piece is. You can also type board, or use the Describe board button.', why: 'Press B whenever you lose track of the position.', hint: 'Tab to the board first, then press the letter B.' },
+    { type: 'do', start: 'f1', expect: 'last', fen: TPC_START, pre: ['e4', 'e5', 'Nf3', 'Nc6'], goal: 'Hear the last move. On the board, press L. You will hear the move that was just played. You can also type last.', why: 'The last move was Black\'s knight to c6. L always tells you what just happened.', hint: 'Tab to the board, then press the letter L.' },
+    { type: 'do', start: 'f1', expect: 'moves', fen: TPC_START, pre: ['e4', 'e5', 'Nf3', 'Nc6'], goal: 'Hear legal moves. On the board, go to one of your pieces, like the bishop on f1, and press M. You will hear every square it can go to. You can also type moves f1.', why: 'M works on any piece, even your opponent\'s, so you can check what they threaten.', hint: 'Move to a square with a piece on it, then press the letter M.' },
+    { type: 'do', start: 'f1', expect: 'repeat', fen: TPC_START, pre: ['e4', 'e5', 'Nf3', 'Nc6'], goal: 'Hear it again. Press P on the board, or use the Repeat button at the top of the screen, to hear the last message again. If the app\'s own voice is talking, X stops it.', why: 'P repeats, X stops. Both work any time.', hint: 'Tab to the board and press the letter P, or find the Repeat button near the top.' },
+    { type: 'info', settings: true, fen: TPC_START, goal: 'Make it yours. Try a setting below. App speech reads everything aloud with your device\'s voice. Leave it off if you use a screen reader, which already reads for you. Voice, speed, volume and more are on the Access tab.' },
+    { type: 'info', fen: TPC_START, goal: 'You are ready. Your own game is waiting on the Play tab, and the Learn tab has step-by-step lessons. In a lesson, press H for a hint. Open this tour again any time with the How to use button.' }
+  ]
+};

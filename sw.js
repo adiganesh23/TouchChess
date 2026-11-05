@@ -1,5 +1,5 @@
 // Offline cache. Network first, so updates always reach people; falls back to the cache without a connection.
-const CACHE = 'touchpoint-v2';
+const CACHE = 'touchpoint-v3';
 const FILES = ['./', 'index.html', 'css/styles.css', 'js/app.js', 'js/lessons.js', 'js/vendor/chess.js',
   'fonts/atkinson-400.woff2', 'fonts/atkinson-700.woff2',
   'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png'];

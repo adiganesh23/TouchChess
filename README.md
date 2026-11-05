@@ -2,7 +2,11 @@
 
 **Touchpoint Chess** — 
 Accessible chess for blind, deaf, deafblind and sensory-sensitive learners.
-Speech, vibration patterns, spatial tones, captions, high contrast and guided lessons.
+Speech, vibration patterns, spatial tones, captions, high contrast, an interactive "How to use" tutorial and guided lessons.
+
+It targets WCAG 2.2 AA. See [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md) for what is tested and what is not,
+[docs/CHANGES.md](docs/CHANGES.md) for the latest changes, and
+[docs/screen-reader-test-checklist.md](docs/screen-reader-test-checklist.md) for testing with a real screen reader user.
 
 ## Open in VS Code
 
@@ -34,18 +38,20 @@ No Live Server? Run this in the VS Code terminal instead (needs Node.js):
     index.html            Page structure and all labelled controls
     css/styles.css        Colours, board, high-contrast and calm themes
     js/app.js             Board, speech, haptics, tones, commands, computer opponent
-    js/lessons.js         The course: every lesson, position and answer
+    js/lessons.js         The course (every lesson, position and answer) and the How to use tutorial
     js/vendor/chess.js    Chess rules engine (chess.js 0.10.3, BSD licence)
     fonts/                Atkinson Hyperlegible, self-hosted so it works offline (OFL licence)
     sw.js                 Offline cache
     manifest.webmanifest  Lets phones install it as an app
     tests/test_app.py     End-to-end tests that drive the app in Chrome
+    docs/                 Accessibility statement, change summary, screen reader checklist, test report
 
 ## Where to change things
 
 | What | Look for |
 |---|---|
 | Lessons (positions, goals, explanations) | `js/lessons.js`; the step types are explained at the top |
+| The How to use tutorial | `const TPC_TOUR` in `js/lessons.js` |
 | Piece drawings | `const PIECE_ART` in `js/app.js` |
 | Vibration patterns per piece | `const PAT` in `js/app.js` |
 | What each piece does, its points and pattern | `const PIECE_INFO` in `js/app.js` |
@@ -66,8 +72,13 @@ Needs Python and Google Chrome:
     .venv/bin/pip install playwright
     .venv/bin/python tests/test_app.py
 
-To add an automated accessibility audit, download
-[axe-core's `axe.min.js`](https://cdn.jsdelivr.net/npm/axe-core/axe.min.js) and pass its path as an argument.
+To add the automated accessibility audit, download
+[axe-core's `axe.min.js`](https://cdn.jsdelivr.net/npm/axe-core@4.10.2/axe.min.js) and pass its path as an argument:
+
+    .venv/bin/python tests/test_app.py path/to/axe.min.js
+
+Each run writes what it measured (axe results, contrast ratios for every theme, zoom and reflow, focus order and
+the accessibility tree) to `docs/test-report.md`. Set `ONLY=tutorial` (or `speech`, `keyboard`, `axe` and so on) to run one group.
 
 Automated checks cannot tell you whether the app is pleasant to use with a screen reader or a braille
 display. Test with real assistive technology, and ideally with the people it is for:
