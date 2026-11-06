@@ -1,4 +1,8 @@
-# What changed: accessibility, tutorial and lessons update
+# What changed
+
+See [REDESIGN.md](REDESIGN.md) for the November 2026 visual redesign.
+
+## Accessibility, tutorial and lessons update
 
 November 2026. Every feature that worked before still works: the board, typed moves, the computer opponent, lessons, captions, vibration, tones, explore-by-finger, quick setups, offline mode and saved games and progress. Saved games, lesson progress and settings carry over.
 
@@ -31,7 +35,7 @@ November 2026. Every feature that worked before still works: the board, typed mo
   - Flip board, New game and Opponent are under **Game options**.
   - Settings are grouped: Speech and sound, Seeing, Touch, Messages and comfort, Game.
 - **High contrast** now covers the whole app in pure black and white, with thick borders. It has a light and a dark version.
-- **Board squares are always at least 44 × 44 pixels.** On phones narrower than about 380 pixels, the board scrolls sideways instead of shrinking.
+- **Board squares are always at least 44 × 44 pixels.** The board runs edge to edge on phones, and below 352 pixels wide it scrolls sideways instead of shrinking.
 - **Zoom and short screens.** At 400% zoom, or on a phone held sideways, the message bar and tabs stop sticking to the screen, so they don't cover the content. Focus is never hidden behind them.
 - **Skip links.** "Skip to main content" was added before "Skip to the chessboard".
 - Typing a move after checkmate now says the game is over.

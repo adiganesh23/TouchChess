@@ -16,10 +16,12 @@ We aim to meet the **Web Content Accessibility Guidelines (WCAG) 2.2, level AA**
 - **Keyboard.** Everything works from the keyboard. There are two skip links, a strong two-colour focus ring, and no keyboard traps. Board shortcuts: B hears the board, L the last move, M legal moves, P repeats the last message, X stops the app's speech.
 - **The app's own voice.** It is optional and starts off at every visit. It never makes a sound before you press a key or tap. You can choose the voice, speed and volume. Turning it off does not affect your screen reader.
 - **Seeing.** Light, dark and high-contrast themes, plus a calm theme, follow your device setting. Four text sizes are available. Nothing is shown by colour alone.
-- **Zoom and small screens.** The page reflows at 200% and 400% zoom with no sideways scrolling. The only exception is the board on screens under about 380 pixels wide, which scrolls sideways so its squares stay at least 44 pixels.
+- **Zoom and small screens.** The page reflows at 200% and 400% zoom with no sideways scrolling. The only exception is the board on screens under 352 pixels wide, which scrolls sideways so its squares stay at least 44 pixels.
 - **Touch.** Every button and every square is at least 44 by 44 pixels.
 - **No pop-ups.** Confirmations and the promotion choice appear in the page itself. The app never uses alert, confirm or prompt boxes.
-- **Tutorial.** A "How to use" tour opens on your first visit and can be reopened at any time. You try each action yourself, and it tells you when you got it right.
+- **First visit.** One question in the page, "How do you want to play?" (Listen, Feel, See, Calm, screen reader or Deaf), switches on the right settings. Skip is always there.
+- **Tutorial.** A "How to use" tour is offered after that question and can be reopened at any time from the Help button. You try each action yourself, and it tells you when you got it right.
+- **Motion.** Pieces lift and slide in 200 ms. Nothing moves with reduced motion turned on, or in Calm mode.
 
 ## What we tested
 
@@ -27,7 +29,7 @@ All of these were run in Google Chrome with automated tests (`tests/test_app.py`
 
 | Test | Result |
 |---|---|
-| axe-core 4.10.2, WCAG 2.0, 2.1 and 2.2 A and AA rules plus best practices, run on 93 page states across 6 themes and phone width | 0 violations |
+| axe-core 4.10.2, WCAG 2.0, 2.1 and 2.2 A and AA rules plus best practices, run on 107 page states across 6 themes and phone width | 0 violations |
 | Keyboard only: Tab order, focus always visible, no traps, focus never hidden under the message bar or tabs, every feature used from the keyboard, including the full tutorial | Pass |
 | Accessibility tree: landmarks, heading levels, grid roles, square names, pressed states | Pass |
 | Reflow at 200% and 400% zoom, at 400, 390 and 360 px wide, and with the WCAG text-spacing override | Pass |
@@ -41,7 +43,8 @@ All of these were run in Google Chrome with automated tests (`tests/test_app.py`
 - **Chrome only.** We have not run the tests in Safari, Firefox or Edge.
 - **Real voices not tested.** The tests replace the device's speech engine with a stand-in. Real voices vary from device to device, and some devices have none.
 - **Double speech.** If the app's speech and a screen reader are both on, you will hear things twice. The app recommends leaving its speech off when you use a screen reader.
-- **Small screens.** On phones narrower than about 380 pixels, the board scrolls sideways so the squares can stay 44 pixels.
+- **Small screens.** On phones the board runs edge to edge, so squares are 45 pixels at 360 pixels wide. Below 352 pixels (for example 400% zoom) the board scrolls sideways so the squares can stay 44 pixels.
+- **Edge labels.** On phones the rank numbers and file letters are printed inside the edge squares at 12 to 13 pixels. They are extra: every square's name is also in its label and in the readout under the board.
 - **Square names over pieces.** axe could not measure the contrast of square names printed over a piece picture. We measured those colour pairs separately, and they pass.
 - **The ✓ on the Speech button.** In older versions of Firefox, a screen reader may read the ✓ mark as part of the button name.
 - **Vibration.** iPhones do not allow web pages to vibrate, so vibration patterns only work on Android.

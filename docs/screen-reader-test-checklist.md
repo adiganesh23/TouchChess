@@ -24,7 +24,9 @@ On a computer, the board needs the screen reader's **focus mode** (NVDA) or arro
 
 | # | Do this | Expect | Result |
 |---|---|---|---|
-| 1.1 | Open the app for the first time | You hear "How to use Touchpoint", the introduction and step 1. Nothing talks before you touch or press anything, apart from the screen reader itself | |
+| 1.1 | Open the app for the first time | You hear "How do you want to play?". Nothing talks before you touch or press anything, apart from the screen reader itself | |
+| 1.1a | Choose "I use a screen reader" | Focus moves to "You're set: I use a screen reader". App speech stays off | |
+| 1.1b | Choose "Take the 3-minute tour" | You hear "How to use Touchpoint" and step 1 | |
 | 1.2 | Move through the page from the top | First: "Skip to main content", then "Skip to the chessboard" | |
 | 1.3 | Find the headings list (VO: Rotor; NVDA: H or Insert + F7; TalkBack: reading controls set to Headings) | One "Touchpoint Chess" heading, then the tutorial heading | |
 | 1.4 | Find the landmarks (VO: Rotor; NVDA: D; TalkBack: Landmarks) | Banner, Messages region, Main and Sections navigation | |
@@ -36,7 +38,7 @@ On a computer, the board needs the screen reader's **focus mode** (NVDA) or arro
 | 1.10 | Step 9: turn on app speech, change the text size and turn on high contrast | Each control reads its name and state, and each change is confirmed | |
 | 1.11 | Open "If the app's speech does not work" | It expands and reads as a list | |
 | 1.12 | Go back to the start of the tutorial and choose Skip tutorial at any step | The tutorial closes and focus goes somewhere sensible. Write down where it went | |
-| 1.13 | Reopen it with the How to use button at the top | It starts again at step 1 | |
+| 1.13 | Reopen it with the Help button at the top | It starts again at step 1 | |
 
 ## 2. Moving around the board
 

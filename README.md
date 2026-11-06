@@ -2,7 +2,7 @@
 
 **Touchpoint Chess** — 
 Accessible chess for blind, deaf, deafblind and sensory-sensitive learners.
-Speech, vibration patterns, spatial tones, captions, high contrast, an interactive "How to use" tutorial and guided lessons.
+Speech, vibration patterns, spatial tones, captions, high contrast, a first-visit "How do you want to play?" screen, an interactive tutorial and guided lessons.
 
 It targets WCAG 2.2 AA. See [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md) for what is tested and what is not,
 [docs/CHANGES.md](docs/CHANGES.md) for the latest changes, and
