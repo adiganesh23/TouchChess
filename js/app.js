@@ -33,12 +33,42 @@ const PIECE_ART = {
 const pieceSvg = (type, color) => `<svg class="pc ${color}" viewBox="0 0 100 100" aria-hidden="true" focusable="false">${PIECE_ART[type]}</svg>`;
 
 const TOUR = TPC_TOUR;
+
+/* Line icons, drawn here so they work offline and follow the text colour (including forced colours). */
+const ICONS = {
+  speaker: '<path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 9a4 4 0 0 1 0 6M19 6.5a7.5 7.5 0 0 1 0 11"/>',
+  speakerOff: '<path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 9.5l5 5M21.5 9.5l-5 5"/>',
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5V14"/><path d="M12 17.2v.1"/>',
+  repeat: '<path d="M4 11a8 8 0 0 1 14.3-4.9L20 8"/><path d="M20 3.5V8h-4.5"/><path d="M20 13a8 8 0 0 1-14.3 4.9L4 16"/><path d="M4 20.5V16h4.5"/>',
+  stop: '<rect x="6" y="6" width="12" height="12" rx="2"/>',
+  board: '<rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M3.5 12h17M12 3.5v17"/><path d="M3.5 7.75h8.5M12 16.25h8.5"/>',
+  last: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  undo: '<path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
+  more: '<circle cx="5.5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="18.5" cy="12" r="1.2"/>',
+  flip: '<path d="M7 20V4M7 4L4 7M7 4l3 3"/><path d="M17 4v16M17 20l-3-3M17 20l3-3"/>',
+  plus: '<circle cx="12" cy="12" r="8.5"/><path d="M12 8v8M8 12h8"/>',
+  close: '<path d="M6 6l12 12M18 6L6 18"/>',
+  hint: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.8 10.6c.6.5.8 1.2.8 2V16h6v-.4c0-.8.2-1.5.8-2A6 6 0 0 0 12 3z"/>',
+  captions: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 10h4M13 10h4M7 14h7M16 14h1"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  chevron: '<path d="M9 5l7 7-7 7"/>',
+  next: '<path d="M5 12h13M13 6l6 6-6 6"/>',
+  todo: '<circle cx="12" cy="12" r="7"/>',
+  ear: '<path d="M7 9.5a5.5 5.5 0 1 1 9.4 3.9c-1.2 1.2-2.4 2-2.4 3.8a3 3 0 0 1-5.5 1.6"/><path d="M10 10a2 2 0 1 1 3 1.7"/>',
+  hand: '<path d="M8 12.5V6a1.5 1.5 0 0 1 3 0v5"/><path d="M11 10.5V4.5a1.5 1.5 0 0 1 3 0v6"/><path d="M14 10.5V6.5a1.5 1.5 0 0 1 3 0V14a7 7 0 0 1-7 7h-.3a6 6 0 0 1-5.4-3.4l-1.6-3.4a1.5 1.5 0 0 1 2.7-1.3L8 14.5"/>',
+  eye: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>',
+  moon: '<path d="M19.5 14.5A8 8 0 1 1 9.5 4.5a6.5 6.5 0 0 0 10 10z"/>',
+  reader: '<rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M7 9.5h2M11 9.5h2M15 9.5h2M7 12.5h10"/>',
+  deaf: '<path d="M7 9.5a5.5 5.5 0 1 1 9.4 3.9c-1.2 1.2-2.4 2-2.4 3.8a3 3 0 0 1-5.5 1.6"/><path d="M4 4l16 16"/>'
+};
+const iconSvg = name => `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICONS[name] || ''}</svg>`;
+function paintIcons(root = document) { root.querySelectorAll('[data-icon]').forEach(el => { if (el.dataset.painted !== el.dataset.icon) { el.innerHTML = iconSvg(el.dataset.icon); el.dataset.painted = el.dataset.icon; } }); }
 const HAS_SPEECH = 'speechSynthesis' in window;
 
 const DEFAULTS = {
   speech: false, rate: 1, volume: 1, voice: '', sound: false, haptics: true, explore: false, flash: true, brief: false,
-  contrast: false, letters: false, coords: true, hints: true, calm: false,
-  theme: 'auto', textSize: 'normal', cpu: 'gentle', opponent: 'cpu', onboarded: false
+  contrast: false, letters: false, coords: false, hints: true, calm: false,
+  theme: 'auto', textSize: 'normal', cpu: 'gentle', opponent: 'cpu', onboarded: false, captionsOpen: false
 };
 const settings = Object.assign({}, DEFAULTS);
 function readJson(key) { try { const v = JSON.parse(localStorage.getItem(key)); return v && typeof v === 'object' ? v : {}; } catch (e) { return {}; } }
@@ -262,9 +292,8 @@ function render() {
   }
   $('modePill').textContent = S.lesson ? (S.lesson.tour ? 'Tutorial' : 'Lesson') : (settings.opponent === 'cpu' ? 'You vs computer' : 'Two players');
   $('oppPanel').hidden = !!S.lesson;
-  $('lessonActions').hidden = !S.lesson;
   $('bNew').hidden = !!S.lesson;
-  $('bUndo').textContent = S.lesson ? 'Restart step' : 'Undo';
+  $('bUndoText').textContent = S.lesson ? 'Restart step' : 'Undo';
   document.body.classList.toggle('in-lesson', !!S.lesson);
   renderStatus();
 }
@@ -495,18 +524,22 @@ function loadStep(first) {
   $('lessonCard').hidden = false;
   $('lcNext').textContent = nextLabel(); $('lcNext').hidden = !info;
   $('lcHint').hidden = st.type === 'choice' || info;
-  $('lcRepeat').hidden = false; $('lcRepeat').textContent = tour ? 'Repeat step' : 'Repeat goal';
-  $('lcExit').textContent = tour ? 'Skip tutorial' : 'Leave lesson';
+  $('lcRepeat').hidden = false; $('lcRepeatText').textContent = tour ? 'Repeat step' : 'Repeat goal';
+  $('lcExitText').textContent = tour ? 'Skip tutorial' : 'Leave lesson';
+  setCard('goal'); $('lcBack').hidden = true; $('lessonActions').hidden = false;
   $('lcHelp').hidden = !tour;
   $('lcFeedback').hidden = true; $('lcFeedback').textContent = '';
   $('lcEyebrow').textContent = `${S.lesson.tag} · step ${S.step + 1} of ${S.lesson.steps.length}`;
   $('lcTitle').textContent = S.lesson.title;
   $('lcIntro').textContent = S.lesson.intro; $('lcIntro').hidden = !first;
+  $('lcIntro').classList.remove('open'); $('lcMore').setAttribute('aria-expanded', 'false'); $('lcMore').textContent = 'Show introduction'; $('lcMore').hidden = true;
+  // Only offer the toggle when the intro is actually cut short on screen (it always is on phones).
+  if (first) requestAnimationFrame(() => { const i = $('lcIntro'); $('lcMore').hidden = i.hidden || i.scrollHeight <= i.clientHeight + 2; });
   $('lcGoal').textContent = st.goal; $('lcGoal').hidden = false;
   $('lcSteps').innerHTML = S.lesson.steps.map((_, i) => `<span class="${i <= S.step ? 'on' : ''}"></span>`).join('');
   renderChoices(st);
   render();
-  announce((first ? `${S.lesson.title}. ${S.lesson.intro} ` : '') + st.goal, 'info', { noLive: true, short: st.goal, bar: `${S.lesson.title}: step ${S.step + 1} of ${S.lesson.steps.length}. The goal is below.` });
+  announce((first ? `${S.lesson.title}. ${S.lesson.intro} ` : '') + st.goal, 'info', { noLive: true, short: st.goal, bar: `${S.lesson.title} · step ${S.step + 1} of ${S.lesson.steps.length}` });
   focusLessonText();
 }
 function renderChoices(st) {
@@ -529,29 +562,31 @@ function renderChoices(st) {
     b.addEventListener('click', () => {
       if (S.awaitNext) return;
       if (c.ok) { b.classList.add('right'); stepPassed(`Correct. ${c.why.replace(/^Yes\.\s*/, '')}`); }
-      else { b.classList.add('wrong'); announce(`Not quite. ${c.why} Try again.`, 'error'); }
+      else { b.classList.add('wrong'); setCard('error'); announce(`Not quite. ${c.why} Try again.`, 'error'); }
     });
     box.appendChild(b);
   });
 }
 /* Moves on only when the learner chooses Next, so nobody is rushed and screen readers finish reading first.
    In the tour, focus stays where the learner is (often the board), and the message comes through the live region. */
+/* The card's look follows the step: goal, error (a wrong try), success, complete. Shape changes as well as colour. */
+function setCard(state) { $('lessonCard').dataset.state = state; }
 function stepPassed(text) {
   S.awaitNext = true; S.hint = null; S.selected = null;
-  $('lcFeedback').textContent = text; $('lcFeedback').hidden = false;
-  $('lcHint').hidden = true; $('lcIntro').hidden = true;
+  $('lcFeedback').textContent = text; $('lcFeedback').hidden = false; setCard('success');
+  $('lcHint').hidden = true; $('lcIntro').hidden = true; $('lcMore').hidden = true;
   $('lcNext').textContent = nextLabel();
   $('lcNext').hidden = false;
   render();
   if (inTour()) return announce(`${text} Choose Next step, or press N on the board, to carry on.`, 'success', { short: text });
-  announce(text, 'success', { noLive: true });
+  announce(text, 'success', { noLive: true, bar: `Correct · ${S.lesson.title}, step ${S.step + 1} of ${S.lesson.steps.length} done` });
   focusLessonText('lcFeedback');
 }
 function findCheck(sq) {
   if (S.awaitNext) return;
   const st = curStep();
   if (sq === st.target) { S.focus = sq; stepPassed(`Correct, that is ${sq}. ${st.why}`); S.hint = sq; render(); }
-  else announce(`Not quite. That is ${sq}. ${st.target} is ${dirText(sq, st.target)} from here.`, 'error');
+  else setCard('error'), announce(`Not quite. That is ${sq}. ${st.target} is ${dirText(sq, st.target)} from here.`, 'error');
 }
 function tourEvent(kind) {
   if (!inTour() || S.awaitNext) return;
@@ -573,7 +608,7 @@ function lessonMove(from, to, promotion) {
     stepPassed(`Correct. ${describeMove(m)} ${mate ? 'Checkmate! ' : ''}${st.why}`);
     return;
   }
-  g.undo(); S.last = null; S.focus = from; render();
+  g.undo(); S.last = null; S.focus = from; render(); setCard('error');
   if (st.type === 'do') return announce(`The ${NAMES[m.piece]} went back to ${from}. This step is not about moving. ${st.goal}`, 'error', { short: `The ${NAMES[m.piece]} went back to ${from}. Try the step again.` });
   announce(`Not quite. ${describeMove(m)} That is a legal move, but not the goal, so the piece went back to ${from}. ${st.goal}`, 'error', { short: `Not quite. The piece is back on ${from}. Try again.` });
 }
@@ -593,8 +628,9 @@ function nextStep() {
   $('lcFeedback').textContent = `Lesson complete: ${S.lesson.title}. ${nxt ? `Next up: ${nxt.title}.` : 'You finished every lesson. Try a game against the computer.'}`;
   $('lcFeedback').hidden = false;
   $('lcSteps').innerHTML = S.lesson.steps.map(() => '<span class="on"></span>').join('');
-  $('lcHint').hidden = true; $('lcRepeat').hidden = true; $('lcChoices').hidden = true;
-  $('lcNext').textContent = nxt ? `Start: ${nxt.title}` : 'Back to lessons';
+  $('lcHint').hidden = true; $('lcRepeat').hidden = true; $('lcChoices').hidden = true; $('lessonActions').hidden = true;
+  $('lcNext').textContent = nxt ? `Next lesson: ${nxt.title}` : 'Back to lessons';
+  $('lcBack').hidden = !nxt; setCard('complete');
   announce($('lcFeedback').textContent, 'success', { noLive: true });
   focusLessonText('lcFeedback');
 }
@@ -621,7 +657,7 @@ function hint() {
 function leaveCourse() {
   clearPending(); cancelAsk();
   S.lesson = null; S.awaitNext = false; S.complete = false; S.hint = null; S.selected = null;
-  $('lessonCard').hidden = true;
+  $('lessonCard').hidden = true; $('lessonActions').hidden = true;
   if (S.saved) { S.game = S.saved.game; S.last = S.saved.last; S.flipped = S.saved.flipped; S.saved = null; }
   buildBoard();
 }
@@ -638,7 +674,7 @@ function finishTour(completed) {
   show('play', false);
   const back = S.tourReturn; S.tourReturn = null;
   (back && document.contains(back) ? back : cells[S.focus]).focus();
-  announce(completed ? 'Tutorial finished. Your game is on the board. Open the tutorial again any time with How to use.' : 'Tutorial closed. Open it again any time with the How to use button at the top.', 'info');
+  announce(completed ? 'Tutorial finished. Your game is on the board. Open the tutorial again any time with the Help button.' : 'Tutorial closed. Open it again any time with the Help button at the top.', 'info');
   maybeCpu();
 }
 
@@ -830,13 +866,13 @@ const PRESETS = [
   { id: 'reader', label: 'I use a screen reader', detail: 'VoiceOver, TalkBack, NVDA or JAWS reads everything.', set: { speech: false, sound: false, haptics: true, explore: false, brief: false, flash: true, calm: false, contrast: false, letters: false } },
   { id: 'voice', label: 'Speak to me', detail: 'This app reads aloud, with tones that show where you are.', set: { speech: true, sound: true, haptics: true, explore: true, brief: false, flash: true, calm: false, contrast: false, letters: false } },
   { id: 'braille', label: 'I use braille or touch', detail: 'Short messages for braille displays, vibration, no sound.', set: { speech: false, sound: false, haptics: true, explore: true, brief: true, flash: true, calm: false, contrast: false, letters: false } },
-  { id: 'deaf', label: 'I am Deaf or hard of hearing', detail: 'Captions and visual alerts, no sound.', set: { speech: false, sound: false, haptics: true, explore: false, brief: false, flash: true, calm: false, contrast: false, letters: false } },
+  { id: 'deaf', label: 'I am Deaf or hard of hearing', detail: 'Captions and visual alerts, no sound.', set: { speech: false, sound: false, haptics: true, explore: false, brief: false, flash: true, calm: false, contrast: false, letters: false, captionsOpen: true } },
   { id: 'lowvision', label: 'I have low vision', detail: 'High contrast, letters for pieces, larger text.', set: { speech: false, sound: false, haptics: true, explore: false, brief: false, flash: true, calm: false, contrast: true, letters: true, coords: true, textSize: 'large' } },
   { id: 'calm', label: 'I prefer things calm', detail: 'Soft colours, no flashes or tones, more time.', set: { speech: false, sound: false, haptics: false, explore: false, brief: true, flash: false, calm: true, contrast: false, letters: false } }
 ];
 function applyPreset(p) {
   Object.assign(settings, p.set, { onboarded: true }); save();
-  syncControls(); applySettings();
+  syncControls(); applySettings(); $('capBox').open = !!settings.captionsOpen;
   announce(`Set up: ${p.label}. You can change anything on the Access tab.`, 'success', { forceSpeech: p.id === 'voice' });
 }
 function presetButton(p) {
@@ -860,7 +896,7 @@ const OPTS = [
   { k: 'contrast', g: 'see', t: 'High contrast', d: 'Pure black and white everywhere, thick borders, and yellow and deep blue squares. Follows your light or dark choice.', tags: ['Low vision'] },
   { k: 'theme', g: 'see', type: 'select', t: 'Light or dark', d: 'Device setting follows your phone or computer.', tags: ['Low vision', 'Sensory sensitivity'], choices: [['auto', 'Device setting'], ['light', 'Light'], ['dark', 'Dark']] },
   { k: 'letters', g: 'see', t: 'Letters instead of piece shapes', d: 'Shows K, Q, R, B, N and P in bold circles. White pieces are white circles, black pieces are black circles.', tags: ['Low vision', 'Learning'] },
-  { k: 'coords', g: 'see', t: 'Square names on every square', d: 'Prints e4, f5 and so on in the corner of each square, so you never have to count.', tags: ['Learning', 'Low vision'] },
+  { k: 'coords', g: 'see', t: 'Square names on every square', d: 'Prints e4, f5 and so on in the corner of every square, so you never have to count. When it is off, rank numbers and file letters still run along the edges of the board.', tags: ['Learning', 'Low vision'] },
   { k: 'hints', g: 'see', t: 'Show where a piece can go', d: 'After you pick up a piece, its legal squares get a dot, and captures get a dashed ring.', tags: ['Learning'] },
   { k: 'haptics', g: 'touch', t: 'Vibration patterns', d: 'Feel each piece: pawn 1 short, knight 2 short, bishop 3 short, rook 1 long, queen 2 long, king 3 long. Check is a strong double buzz.' + (CAN_VIBRATE ? '' : ' This device cannot vibrate from a web page, so this has no effect here.'), tags: ['Deafblind', 'Blind'] },
   { k: 'explore', g: 'touch', t: 'Explore by dragging a finger', d: 'Slide a finger over the board to feel, hear and read each square without picking anything up. Tap to select. The page will not scroll while your finger is on the board. Not needed with VoiceOver or TalkBack, which do this already.', tags: ['Deafblind', 'Blind', 'Low vision'] },
@@ -966,7 +1002,8 @@ function syncControls() {
   }
   const b = $('bSpeech');
   b.setAttribute('aria-pressed', settings.speech ? 'true' : 'false');
-  $('bSpeechState').textContent = settings.speech ? 'On' : 'Off';
+  $('bSpeechState').textContent = settings.speech ? 'on' : 'off';
+  b.querySelector('.ic').dataset.icon = settings.speech ? 'speaker' : 'speakerOff'; paintIcons(b);
   $('bStop').hidden = !settings.speech;
 }
 function setSpeech(on) {
@@ -979,6 +1016,7 @@ function applySettings() {
   document.body.classList.toggle('letters', settings.letters);
   document.body.classList.toggle('calm', settings.calm);
   document.body.classList.toggle('explore', settings.explore);
+  document.body.classList.toggle('coords-on', settings.coords);
   const root = document.documentElement;
   if (settings.theme === 'auto') root.removeAttribute('data-theme'); else root.dataset.theme = settings.theme;
   if (settings.textSize === 'normal') root.removeAttribute('data-text'); else root.dataset.text = settings.textSize;
@@ -1044,7 +1082,22 @@ document.querySelectorAll('input[name=opp]').forEach(r => r.addEventListener('ch
   settings.opponent = value; save(); applySettings(); newGame();
 }));
 $('lcHint').onclick = hint; $('lcRepeat').onclick = repeatGoal;
-$('lcExit').onclick = exitLesson; $('lcNext').onclick = nextStep;
+$('lcExit').onclick = exitLesson; $('lcNext').onclick = nextStep; $('lcBack').onclick = exitLesson;
+$('lcMore').onclick = () => {
+  const open = $('lcIntro').classList.toggle('open');
+  $('lcMore').setAttribute('aria-expanded', open ? 'true' : 'false'); $('lcMore').textContent = open ? 'Hide introduction' : 'Show introduction';
+};
+/* More options: a tray that opens in place. Esc or Close shuts it and puts focus back on More. */
+function setMore(open, restore) {
+  $('moreOpts').hidden = !open; $('bMore').setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (open) { $('moreOpts').focus({ preventScroll: true }); $('moreOpts').scrollIntoView({ block: 'nearest' }); }
+  else if (restore) $('bMore').focus();
+}
+$('bMore').onclick = () => setMore($('moreOpts').hidden);
+$('bMoreClose').onclick = () => setMore(false, true);
+$('moreOpts').addEventListener('keydown', e => { if (e.key === 'Escape' && !askFinish) { e.preventDefault(); setMore(false, true); } });
+$('capBox').open = !!settings.captionsOpen;
+$('capBox').addEventListener('toggle', () => { if (settings.captionsOpen !== $('capBox').open) { settings.captionsOpen = $('capBox').open; save(); } });
 $('lcHelpBody').innerHTML = $('speechHelpBody').innerHTML;
 
 function restoreGame() {
@@ -1062,7 +1115,7 @@ function restoreGame() {
 if ('ResizeObserver' in window) new ResizeObserver(([e]) => document.documentElement.style.setProperty('--bar-h', Math.ceil(e.contentRect.height) + 'px')).observe(document.querySelector('.banner-bar'));
 
 const resumed = restoreGame();
-buildBoard(); renderLessons(); renderFeel(); renderPresets(); renderOpts(); applySettings(); syncControls();
+buildBoard(); renderLessons(); renderFeel(); renderPresets(); renderOpts(); applySettings(); paintIcons(); syncControls();
 if (HAS_SPEECH) { loadVoices(); try { speechSynthesis.addEventListener('voiceschanged', loadVoices); } catch (e) {} }
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
 if (resumed) {

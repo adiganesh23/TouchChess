@@ -181,7 +181,7 @@ const TPC_LESSONS = [
    `pre` lists moves played after loading `fen`, so the last move is known. */
 const TPC_TOUR = {
   id: 'tour', title: 'How to use Touchpoint', tag: 'How to use', tour: true,
-  intro: 'This short tour shows you how the app works. You try each thing yourself and the tour tells you when it worked. It takes about three minutes. Skip it any time, and open it again with the How to use button at the top.',
+  intro: 'This short tour shows you how the app works. You try each thing yourself and the tour tells you when it worked. It takes about three minutes. Skip it any time, and open it again with the Help button at the top.',
   steps: [
     { type: 'info', presets: true, fen: TPC_START, goal: 'If you use a screen reader such as VoiceOver, TalkBack, NVDA or JAWS, keep it on. The app is built to work with it. You can pick a quick setup below, or just choose Next step.' },
     { type: 'find', start: 'e2', fen: TPC_START, target: 'e4', goal: 'Moving around. Go to the board and move to the square e4. Keyboard: press Tab until you reach the board, then use the arrow keys. Each square says its name and what is on it, like "e2, white pawn". Touch: tap e4. Screen reader on a phone: swipe until you hear e4, then double-tap.', why: 'You found e4. Letters are files, a to h from left to right. Numbers are ranks, 1 to 8 going away from you.' },
@@ -192,6 +192,6 @@ const TPC_TOUR = {
     { type: 'do', start: 'f1', expect: 'moves', fen: TPC_START, pre: ['e4', 'e5', 'Nf3', 'Nc6'], goal: 'Hear legal moves. On the board, go to one of your pieces, like the bishop on f1, and press M. You will hear every square it can go to. You can also type moves f1.', why: 'M works on any piece, even your opponent\'s, so you can check what they threaten.', hint: 'Move to a square with a piece on it, then press the letter M.' },
     { type: 'do', start: 'f1', expect: 'repeat', fen: TPC_START, pre: ['e4', 'e5', 'Nf3', 'Nc6'], goal: 'Hear it again. Press P on the board, or use the Repeat button at the top of the screen, to hear the last message again. If the app\'s own voice is talking, X stops it.', why: 'P repeats, X stops. Both work any time.', hint: 'Tab to the board and press the letter P, or find the Repeat button near the top.' },
     { type: 'info', settings: true, fen: TPC_START, goal: 'Make it yours. Try a setting below. App speech reads everything aloud with your device\'s voice. Leave it off if you use a screen reader, which already reads for you. Voice, speed, volume and more are on the Access tab.' },
-    { type: 'info', fen: TPC_START, goal: 'You are ready. Your own game is waiting on the Play tab, and the Learn tab has step-by-step lessons. In a lesson, press H for a hint. Open this tour again any time with the How to use button.' }
+    { type: 'info', fen: TPC_START, goal: 'You are ready. Your own game is waiting on the Play tab, and the Learn tab has step-by-step lessons. In a lesson, press H for a hint. Open this tour again any time with the Help button at the top.' }
   ]
 };

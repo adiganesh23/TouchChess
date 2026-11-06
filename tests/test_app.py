@@ -87,8 +87,8 @@ def start_lesson(p, index):
 
 
 def open_more(p):
-    if not p.evaluate("document.getElementById('moreOpts').open"):
-        p.click('#moreOpts > summary')
+    if p.evaluate("document.getElementById('moreOpts').hidden"):
+        p.click('#bMore')
 
 
 def active(p):
@@ -531,9 +531,12 @@ def test_keyboard(browser):
         if p.evaluate("document.getElementById('log').children.length") <= before:
             check(f'shortcut {k} works', False)
     # Keyboard-only: More options, history, confirmation dialog
-    ok = tab_to(p, lambda a: p.evaluate("document.activeElement.parentElement.id") == 'moreOpts')
+    ok = tab_to(p, 'bMore')
     p.keyboard.press('Enter')
-    check('Game options opens by keyboard', ok and p.evaluate("document.getElementById('moreOpts').open"))
+    check('More options opens by keyboard, with focus in the tray', ok and p.is_visible('#moreOpts') and active(p) == 'moreOpts' and p.get_attribute('#bMore', 'aria-expanded') == 'true')
+    p.keyboard.press('Escape')
+    check('Escape closes More and returns focus to it', not p.is_visible('#moreOpts') and active(p) == 'bMore')
+    p.keyboard.press('Enter')
     tab_to(p, 'bNew'); p.keyboard.press('Enter')
     check('confirmation appears in the page with focus on it', p.is_visible('#ask') and active(p) == 'ask')
     p.keyboard.press('Tab')
@@ -550,8 +553,10 @@ def test_keyboard(browser):
     check('changing opponent mid-game asks first', p.is_visible('#ask'))
     p.keyboard.press('Escape'); p.wait_for_timeout(100)
     check('declining keeps the opponent', p.is_checked('#oppCpu'))
-    ok = tab_to(p, 'log')
-    check('captions are reachable by keyboard', ok)
+    ok = tab_to(p, lambda a: p.evaluate("document.activeElement.parentElement.id") == 'capBox')
+    p.keyboard.press('Enter')
+    ok2 = tab_to(p, 'log', 5)
+    check('captions open and are reachable by keyboard', ok and ok2)
     ok = tab_to(p, lambda a: p.evaluate("document.activeElement.dataset.view") == 'options')
     p.keyboard.press('Enter')
     check('tabs work by keyboard and move focus to the heading', ok and active(p) == 'optH')
@@ -592,7 +597,7 @@ def test_structure(browser):
 # ---------------------------------------------------------------- zoom, reflow, spacing, targets
 
 SPACING = "*{line-height:1.5!important;letter-spacing:.12em!important;word-spacing:.16em!important}p{margin-bottom:2em!important}"
-CLIPPED = """() => [...document.querySelectorAll('body *')].filter(e => { if (e.closest('[hidden],.sr,.board,details:not([open]) > :not(summary)')) return false;
+CLIPPED = """() => [...document.querySelectorAll('body *')].filter(e => { if (e.closest('[hidden],.sr,.board,.lc-intro:not(.open),details:not([open]) > :not(summary)')) return false;
   const cs = getComputedStyle(e); if (!['hidden','clip'].includes(cs.overflowX) && !['hidden','clip'].includes(cs.overflowY)) return false;
   if (!e.textContent.trim() || e.getClientRects().length === 0) return false;
   return e.scrollWidth > e.clientWidth + 2 || e.scrollHeight > e.clientHeight + 2; }).map(e => e.id || e.className || e.tagName)"""
@@ -670,6 +675,10 @@ PAIRS = [
     ('White edge of black pieces on dark square', '#FFFFFF', '--sq-dark', 3), ('Light square against dark square', '--sq-light', '--sq-dark', 3),
     ('Move dot ring on dark square', '#FFFFFF', '--sq-dark', 3), ('Move dot ring on light square', '#000000', '--sq-light', 3),
     ('Board edge (outline) against page', '--line', '--bg', 3),
+    ('Lesson goal text on its tint', '--fg', '--accent-soft', 4.5), ('Correct feedback text on its tint', '--fg', '--ok-soft', 4.5),
+    ('Correct feedback border', '--ok', '--ok-soft', 3), ('Error message text on its tint', '--fg', '--warn-soft', 4.5),
+    ('Error border on its tint', '--warn', '--warn-soft', 3), ('Text links', '--accent', '--surface', 4.5),
+    ('Secondary text on tinted rows', '--muted', '--surface-2', 4.5), ('Selected tab text', '--accent-fg', '--accent', 4.5),
 ]
 THEMES = [('Light', {}, 'light'), ('Dark', {}, 'dark'), ('High contrast (light)', {'contrast': True}, 'light'),
           ('High contrast (dark)', {'contrast': True}, 'dark'), ('Calm (light)', {'calm': True}, 'light'), ('Calm (dark)', {'calm': True}, 'dark')]

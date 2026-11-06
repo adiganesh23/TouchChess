@@ -27,9 +27,17 @@
       <div class="mark" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
       <h1>Touchpoint Chess</h1>
     </div>
+    <!-- On phones this bar sits at the bottom of the screen; on wide screens it sits here, in the top bar. -->
+    <nav class="tabs" aria-label="Sections">
+      <div class="in">
+        <button type="button" data-view="play" aria-current="page"><span class="g" data-piece="n" aria-hidden="true"></span>Play</button>
+        <button type="button" data-view="learn"><span class="g" data-piece="b" aria-hidden="true"></span>Learn</button>
+        <button type="button" data-view="options"><span class="g" data-piece="q" aria-hidden="true"></span>Access</button>
+      </div>
+    </nav>
     <div class="tools">
-      <button class="btn slim" type="button" id="bSpeech" aria-pressed="false">Speech <span class="state" id="bSpeechState" aria-hidden="true">Off</span></button>
-      <button class="btn slim" type="button" id="bTour">How to use</button>
+      <button class="tool" type="button" id="bSpeech" aria-pressed="false"><span class="ic" data-icon="speakerOff" aria-hidden="true"></span><span>Speech <span class="state" id="bSpeechState" aria-hidden="true">off</span></span></button>
+      <button class="tool" type="button" id="bTour" aria-label="Help: how to use the app"><span class="ic" data-icon="help" aria-hidden="true"></span><span>Help</span></button>
     </div>
   </div>
 </header>
@@ -38,30 +46,35 @@
 <section class="banner-bar" aria-label="Messages">
   <div class="wrap">
     <div class="banner" id="banner" data-level="info" aria-hidden="true">You play White. Tap a piece, or type a move like e4.</div>
-    <div class="banner-tools">
-      <button class="btn slim" type="button" id="bRepeat" aria-keyshortcuts="P" title="Repeat the last message (P)">Repeat</button>
-      <button class="btn slim" type="button" id="bStop" aria-keyshortcuts="X" title="Stop speaking (X)" hidden>Stop</button>
-    </div>
+    <button class="icon-btn" type="button" id="bRepeat" aria-label="Repeat last message" aria-keyshortcuts="P" title="Repeat the last message (P)"><span class="ic" data-icon="repeat" aria-hidden="true"></span></button>
+    <button class="icon-btn" type="button" id="bStop" aria-label="Stop speaking" aria-keyshortcuts="X" title="Stop speaking (X)" hidden><span class="ic" data-icon="stop" aria-hidden="true"></span></button>
   </div>
 </section>
 
 <main class="wrap" id="main" tabindex="-1">
   <!-- PLAY -->
-  <section id="view-play" aria-labelledby="playH">
+  <section id="view-play" class="view" aria-labelledby="playH">
     <h2 id="playH" class="sr" tabindex="-1">Play</h2>
     <div class="play">
       <div class="col board-col">
-        <section class="lesson-card" id="lessonCard" aria-labelledby="lcTitle" hidden>
-          <div class="eyebrow" id="lcEyebrow">Lesson</div>
+        <section class="lesson-card" id="lessonCard" aria-labelledby="lcTitle" data-state="goal" hidden>
+          <div class="lc-top">
+            <div class="eyebrow" id="lcEyebrow">Lesson</div>
+            <button class="chip-btn" id="lcExit" type="button"><span class="ic" data-icon="close" aria-hidden="true"></span><span id="lcExitText">Leave lesson</span></button>
+          </div>
           <div class="steps" id="lcSteps" aria-hidden="true"></div>
           <div id="lcText" class="lc-text" tabindex="-1">
             <h2 id="lcTitle">Lesson</h2>
-            <p id="lcIntro"></p>
+            <p id="lcIntro" class="lc-intro"></p>
             <p id="lcGoal" class="lc-goal"></p>
-            <p id="lcFeedback" class="lc-feedback" tabindex="-1" hidden></p>
           </div>
+          <button class="link-btn" id="lcMore" type="button" aria-expanded="false" aria-controls="lcIntro" hidden>Show introduction</button>
+          <p id="lcFeedback" class="lc-feedback" tabindex="-1" hidden></p>
           <div class="choices" id="lcChoices" hidden></div>
-          <button class="btn primary" id="lcNext" type="button" hidden>Next step</button>
+          <div class="lc-actions">
+            <button class="btn primary big" id="lcNext" type="button" hidden>Next step</button>
+            <button class="btn" id="lcBack" type="button" hidden>Back to lessons</button>
+          </div>
           <details class="help" id="lcHelp" hidden>
             <summary>If the app's speech does not work</summary>
             <div id="lcHelpBody"></div>
@@ -84,61 +97,64 @@
           </div>
         </div>
 
-        <div class="actions" id="lessonActions" hidden>
-          <button class="btn" id="lcHint" type="button" aria-keyshortcuts="H">Show hint</button>
-          <button class="btn" id="lcRepeat" type="button">Repeat goal</button>
-          <button class="btn" id="lcExit" type="button">Leave lesson</button>
+        <div class="lc-tools" id="lessonActions" hidden>
+          <button class="chip-btn" id="lcHint" type="button" aria-keyshortcuts="H"><span class="ic" data-icon="hint" aria-hidden="true"></span>Show hint</button>
+          <button class="chip-btn" id="lcRepeat" type="button"><span class="ic" data-icon="repeat" aria-hidden="true"></span><span id="lcRepeatText">Repeat goal</span></button>
         </div>
       </div>
 
-      <div class="col">
+      <div class="col rail">
         <section id="ask" class="panel ask" role="group" aria-labelledby="askTitle" aria-describedby="askBody" tabindex="-1" hidden>
           <h2 id="askTitle"></h2>
           <p id="askBody"></p>
           <div class="ask-options" id="askOptions"></div>
         </section>
 
-        <div class="panel">
+        <div class="cmd-box">
           <label class="label" for="cmdInput">Type a move or command</label>
           <form class="cmd" id="cmdForm" autocomplete="off">
             <input id="cmdInput" type="text" inputmode="text" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="e4, Nf3, board, help" aria-describedby="cmdHelp">
             <button class="btn primary" type="submit">Go</button>
           </form>
           <p id="cmdHelp" class="hint-text">Works with braille displays and voice dictation. Type help for every command.</p>
-          <div class="actions">
-            <button class="btn" type="button" id="bDescribe" aria-keyshortcuts="B">Describe board</button>
-            <button class="btn" type="button" id="bLast" aria-keyshortcuts="L">Last move</button>
-            <button class="btn" type="button" id="bUndo">Undo</button>
-          </div>
         </div>
 
-        <details class="panel more" id="moreOpts">
-          <summary>Game options</summary>
-          <div class="more-body">
-            <div class="actions">
-              <button class="btn" type="button" id="bFlip">Flip board</button>
-              <button class="btn" type="button" id="bNew">New game</button>
-            </div>
-            <div id="oppPanel">
-              <span class="label" id="oppL">Opponent</span>
-              <div class="seg" role="radiogroup" aria-labelledby="oppL">
-                <label><input type="radio" name="opp" id="oppCpu" value="cpu"><span>Computer</span></label>
-                <label><input type="radio" name="opp" id="oppHuman" value="human"><span>Friend on this device</span></label>
-              </div>
+        <div class="toolbar" role="group" aria-label="Game tools">
+          <button class="tbtn" type="button" id="bDescribe" aria-keyshortcuts="B"><span class="ic" data-icon="board" aria-hidden="true"></span><span>Describe board</span></button>
+          <button class="tbtn" type="button" id="bLast" aria-keyshortcuts="L"><span class="ic" data-icon="last" aria-hidden="true"></span><span>Last move</span></button>
+          <button class="tbtn" type="button" id="bUndo"><span class="ic" data-icon="undo" aria-hidden="true"></span><span id="bUndoText">Undo</span></button>
+          <button class="tbtn" type="button" id="bMore" aria-expanded="false" aria-controls="moreOpts"><span class="ic" data-icon="more" aria-hidden="true"></span><span>More</span></button>
+        </div>
+
+        <!-- A tray that opens in place under the toolbar: nothing is covered, and Tab can always leave it. -->
+        <section class="sheet" id="moreOpts" aria-labelledby="moreH" tabindex="-1" hidden>
+          <div class="sheet-head">
+            <h2 id="moreH">More options</h2>
+            <button class="icon-btn" type="button" id="bMoreClose" aria-label="Close more options"><span class="ic" data-icon="close" aria-hidden="true"></span></button>
+          </div>
+          <div class="sheet-grid">
+            <button class="tbtn" type="button" id="bFlip"><span class="ic" data-icon="flip" aria-hidden="true"></span><span>Flip board</span></button>
+            <button class="tbtn" type="button" id="bNew"><span class="ic" data-icon="plus" aria-hidden="true"></span><span>New game</span></button>
+          </div>
+          <div id="oppPanel">
+            <span class="label" id="oppL">Opponent</span>
+            <div class="seg" role="radiogroup" aria-labelledby="oppL">
+              <label><input type="radio" name="opp" id="oppCpu" value="cpu"><span>Computer</span></label>
+              <label><input type="radio" name="opp" id="oppHuman" value="human"><span>Friend on this device</span></label>
             </div>
           </div>
-        </details>
-
-        <section class="panel" aria-labelledby="capH">
-          <h2 id="capH">Captions</h2>
-          <ol class="log" id="log" aria-label="Everything the app has announced, newest first" tabindex="0"></ol>
         </section>
+
+        <details class="card captions" id="capBox">
+          <summary><span class="ic" data-icon="captions" aria-hidden="true"></span>Captions <span class="sum-note">every message, newest first</span></summary>
+          <ol class="log" id="log" aria-label="Everything the app has announced, newest first" tabindex="0"></ol>
+        </details>
       </div>
     </div>
   </section>
 
   <!-- LEARN -->
-  <section id="view-learn" class="section" aria-labelledby="learnH" hidden>
+  <section id="view-learn" class="section view" aria-labelledby="learnH" hidden>
     <header>
       <h2 id="learnH" tabindex="-1">Learn</h2>
       <p>Short lessons on the real board, from your first square to your first tactics. Take as long as you like: nothing moves on until you say so. Press H for a hint at any step.</p>
@@ -177,7 +193,7 @@
   </section>
 
   <!-- OPTIONS -->
-  <section id="view-options" class="section" aria-labelledby="optH" hidden>
+  <section id="view-options" class="section view" aria-labelledby="optH" hidden>
     <header>
       <h2 id="optH" tabindex="-1">Access settings</h2>
       <p>Start from a quick setup, then change anything. Your choices are saved on this device. App speech is the one exception: it starts off each visit.</p>
@@ -232,13 +248,6 @@
   </section>
 </main>
 
-<nav class="tabs" aria-label="Sections">
-  <div class="in">
-    <button type="button" data-view="play" aria-current="page"><span class="g" data-piece="n" aria-hidden="true"></span>Play</button>
-    <button type="button" data-view="learn"><span class="g" data-piece="b" aria-hidden="true"></span>Learn</button>
-    <button type="button" data-view="options"><span class="g" data-piece="q" aria-hidden="true"></span>Access</button>
-  </div>
-</nav>
 
 <script src="js/vendor/chess.js"></script>
 <script src="js/lessons.js"></script>

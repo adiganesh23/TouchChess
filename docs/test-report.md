@@ -2,7 +2,7 @@
 
 Written by `tests/test_app.py`. Run it again after any change.
 
-**376 of 376 checks passed.**
+**377 of 377 checks passed.**
 
 ## axe-core
 
@@ -17,57 +17,73 @@ Ratios measured from the colours the page actually uses. Text needs 4.5:1, borde
 
 | What | Colours | Ratio | Needs | Result |
 |---|---|---|---|---|
-| Body text on page | `#111820` on `#F4F6F8` | 16.49:1 | 4.5:1 | Pass |
-| Body text on cards | `#111820` on `#FFFFFF` | 17.87:1 | 4.5:1 | Pass |
-| Secondary text on page | `#46525F` on `#F4F6F8` | 7.36:1 | 4.5:1 | Pass |
-| Secondary text on cards | `#46525F` on `#FFFFFF` | 7.98:1 | 4.5:1 | Pass |
-| Primary button text | `#FFFFFF` on `#1D4ED8` | 6.70:1 | 4.5:1 | Pass |
-| Alert banner text | `#FFFFFF` on `#C8102E` | 5.88:1 | 4.5:1 | Pass |
-| Success banner text | `#FFFFFF` on `#0F7B3E` | 5.35:1 | 4.5:1 | Pass |
+| Body text on page | `#0F1720` on `#F4F6F9` | 16.67:1 | 4.5:1 | Pass |
+| Body text on cards | `#0F1720` on `#FFFFFF` | 18.05:1 | 4.5:1 | Pass |
+| Secondary text on page | `#4A5563` on `#F4F6F9` | 7.00:1 | 4.5:1 | Pass |
+| Secondary text on cards | `#4A5563` on `#FFFFFF` | 7.58:1 | 4.5:1 | Pass |
+| Primary button text | `#FFFFFF` on `#2450D6` | 6.58:1 | 4.5:1 | Pass |
+| Alert banner text | `#FFFFFF` on `#B4232F` | 6.52:1 | 4.5:1 | Pass |
+| Success banner text | `#FFFFFF` on `#0E7A3D` | 5.43:1 | 4.5:1 | Pass |
 | Correct feedback text | `#0B6B35` on `#FFFFFF` | 6.63:1 | 4.5:1 | Pass |
-| Error banner border | `#92400E` on `#FFFFFF` | 7.09:1 | 3:1 | Pass |
-| Square name on light square | `#17212C` on `#DDE6EF` | 12.90:1 | 4.5:1 | Pass |
-| Square name on dark square | `#FFFFFF` on `#4F6D88` | 5.42:1 | 4.5:1 | Pass |
-| Rank and file labels | `#FFFFFF` on `#1E2B3A` | 14.37:1 | 4.5:1 | Pass |
-| Button and input borders on cards | `#6B7785` on `#FFFFFF` | 4.56:1 | 3:1 | Pass |
-| Input border on page | `#6B7785` on `#F4F6F8` | 4.21:1 | 3:1 | Pass |
-| Selected and primary controls on cards | `#1D4ED8` on `#FFFFFF` | 6.70:1 | 3:1 | Pass |
-| Focus outline on page | `#111820` on `#F4F6F8` | 16.49:1 | 3:1 | Pass |
-| Focus outline on cards | `#111820` on `#FFFFFF` | 17.87:1 | 3:1 | Pass |
-| Black edge of white pieces on light square | `#000000` on `#DDE6EF` | 16.64:1 | 3:1 | Pass |
-| White edge of black pieces on dark square | `#FFFFFF` on `#4F6D88` | 5.42:1 | 3:1 | Pass |
-| Light square against dark square | `#DDE6EF` on `#4F6D88` | 4.29:1 | 3:1 | Pass |
-| Move dot ring on dark square | `#FFFFFF` on `#4F6D88` | 5.42:1 | 3:1 | Pass |
-| Move dot ring on light square | `#000000` on `#DDE6EF` | 16.64:1 | 3:1 | Pass |
-| Board edge (outline) against page | `#6B7785` on `#F4F6F8` | 4.21:1 | 3:1 | Pass |
+| Error banner border | `#8A4B00` on `#FFFFFF` | 6.80:1 | 3:1 | Pass |
+| Square name on light square | `#17212C` on `#E4EAF1` | 13.44:1 | 4.5:1 | Pass |
+| Square name on dark square | `#FFFFFF` on `#56769A` | 4.72:1 | 4.5:1 | Pass |
+| Rank and file labels | `#FFFFFF` on `#1B2533` | 15.45:1 | 4.5:1 | Pass |
+| Button and input borders on cards | `#6B7684` on `#FFFFFF` | 4.62:1 | 3:1 | Pass |
+| Input border on page | `#6B7684` on `#F4F6F9` | 4.26:1 | 3:1 | Pass |
+| Selected and primary controls on cards | `#2450D6` on `#FFFFFF` | 6.58:1 | 3:1 | Pass |
+| Focus outline on page | `#0F1720` on `#F4F6F9` | 16.67:1 | 3:1 | Pass |
+| Focus outline on cards | `#0F1720` on `#FFFFFF` | 18.05:1 | 3:1 | Pass |
+| Black edge of white pieces on light square | `#000000` on `#E4EAF1` | 17.34:1 | 3:1 | Pass |
+| White edge of black pieces on dark square | `#FFFFFF` on `#56769A` | 4.72:1 | 3:1 | Pass |
+| Light square against dark square | `#E4EAF1` on `#56769A` | 3.89:1 | 3:1 | Pass |
+| Move dot ring on dark square | `#FFFFFF` on `#56769A` | 4.72:1 | 3:1 | Pass |
+| Move dot ring on light square | `#000000` on `#E4EAF1` | 17.34:1 | 3:1 | Pass |
+| Board edge (outline) against page | `#6B7684` on `#F4F6F9` | 4.26:1 | 3:1 | Pass |
+| Lesson goal text on its tint | `#0F1720` on `#E7EDFC` | 15.40:1 | 4.5:1 | Pass |
+| Correct feedback text on its tint | `#0F1720` on `#E5F4EA` | 15.86:1 | 4.5:1 | Pass |
+| Correct feedback border | `#0B6B35` on `#E5F4EA` | 5.83:1 | 3:1 | Pass |
+| Error message text on its tint | `#0F1720` on `#FBF0E1` | 16.03:1 | 4.5:1 | Pass |
+| Error border on its tint | `#8A4B00` on `#FBF0E1` | 6.04:1 | 3:1 | Pass |
+| Text links | `#2450D6` on `#FFFFFF` | 6.58:1 | 4.5:1 | Pass |
+| Secondary text on tinted rows | `#4A5563` on `#EDF0F4` | 6.63:1 | 4.5:1 | Pass |
+| Selected tab text | `#FFFFFF` on `#2450D6` | 6.58:1 | 4.5:1 | Pass |
 
 ### Dark
 
 | What | Colours | Ratio | Needs | Result |
 |---|---|---|---|---|
-| Body text on page | `#E8EDF3` on `#10151C` | 15.57:1 | 4.5:1 | Pass |
-| Body text on cards | `#E8EDF3` on `#18202A` | 13.95:1 | 4.5:1 | Pass |
-| Secondary text on page | `#B4C0CE` on `#10151C` | 9.92:1 | 4.5:1 | Pass |
-| Secondary text on cards | `#B4C0CE` on `#18202A` | 8.89:1 | 4.5:1 | Pass |
-| Primary button text | `#0B0F14` on `#7AA2FF` | 7.72:1 | 4.5:1 | Pass |
+| Body text on page | `#EEF2F6` on `#0D1117` | 16.82:1 | 4.5:1 | Pass |
+| Body text on cards | `#EEF2F6` on `#161B22` | 15.38:1 | 4.5:1 | Pass |
+| Secondary text on page | `#AEB8C4` on `#0D1117` | 9.42:1 | 4.5:1 | Pass |
+| Secondary text on cards | `#AEB8C4` on `#161B22` | 8.61:1 | 4.5:1 | Pass |
+| Primary button text | `#0B1020` on `#8FB0FF` | 8.86:1 | 4.5:1 | Pass |
 | Alert banner text | `#FFFFFF` on `#B00020` | 7.33:1 | 4.5:1 | Pass |
 | Success banner text | `#FFFFFF` on `#11663A` | 7.03:1 | 4.5:1 | Pass |
-| Correct feedback text | `#4ADE80` on `#18202A` | 9.42:1 | 4.5:1 | Pass |
-| Error banner border | `#FBBF24` on `#18202A` | 9.84:1 | 3:1 | Pass |
+| Correct feedback text | `#4ADE80` on `#161B22` | 9.93:1 | 4.5:1 | Pass |
+| Error banner border | `#FBBF24` on `#161B22` | 10.36:1 | 3:1 | Pass |
 | Square name on light square | `#17212C` on `#A9BCD0` | 8.36:1 | 4.5:1 | Pass |
 | Square name on dark square | `#FFFFFF` on `#45607E` | 6.51:1 | 4.5:1 | Pass |
 | Rank and file labels | `#FFFFFF` on `#05080C` | 20.07:1 | 4.5:1 | Pass |
-| Button and input borders on cards | `#7D8B9B` on `#18202A` | 4.72:1 | 3:1 | Pass |
-| Input border on page | `#7D8B9B` on `#10151C` | 5.27:1 | 3:1 | Pass |
-| Selected and primary controls on cards | `#7AA2FF` on `#18202A` | 6.60:1 | 3:1 | Pass |
-| Focus outline on page | `#E8EDF3` on `#10151C` | 15.57:1 | 3:1 | Pass |
-| Focus outline on cards | `#E8EDF3` on `#18202A` | 13.95:1 | 3:1 | Pass |
+| Button and input borders on cards | `#7D8B9B` on `#161B22` | 4.97:1 | 3:1 | Pass |
+| Input border on page | `#7D8B9B` on `#0D1117` | 5.44:1 | 3:1 | Pass |
+| Selected and primary controls on cards | `#8FB0FF` on `#161B22` | 8.09:1 | 3:1 | Pass |
+| Focus outline on page | `#EEF2F6` on `#0D1117` | 16.82:1 | 3:1 | Pass |
+| Focus outline on cards | `#EEF2F6` on `#161B22` | 15.38:1 | 3:1 | Pass |
 | Black edge of white pieces on light square | `#000000` on `#A9BCD0` | 10.79:1 | 3:1 | Pass |
 | White edge of black pieces on dark square | `#FFFFFF` on `#45607E` | 6.51:1 | 3:1 | Pass |
 | Light square against dark square | `#A9BCD0` on `#45607E` | 3.34:1 | 3:1 | Pass |
 | Move dot ring on dark square | `#FFFFFF` on `#45607E` | 6.51:1 | 3:1 | Pass |
 | Move dot ring on light square | `#000000` on `#A9BCD0` | 10.79:1 | 3:1 | Pass |
-| Board edge (outline) against page | `#7D8B9B` on `#10151C` | 5.27:1 | 3:1 | Pass |
+| Board edge (outline) against page | `#7D8B9B` on `#0D1117` | 5.44:1 | 3:1 | Pass |
+| Lesson goal text on its tint | `#EEF2F6` on `#1E2A47` | 12.64:1 | 4.5:1 | Pass |
+| Correct feedback text on its tint | `#EEF2F6` on `#12301F` | 12.71:1 | 4.5:1 | Pass |
+| Correct feedback border | `#4ADE80` on `#12301F` | 8.21:1 | 3:1 | Pass |
+| Error message text on its tint | `#EEF2F6` on `#2E2410` | 13.57:1 | 4.5:1 | Pass |
+| Error border on its tint | `#FBBF24` on `#2E2410` | 9.14:1 | 3:1 | Pass |
+| Text links | `#8FB0FF` on `#161B22` | 8.09:1 | 4.5:1 | Pass |
+| Secondary text on tinted rows | `#AEB8C4` on `#1F2630` | 7.58:1 | 4.5:1 | Pass |
+| Selected tab text | `#0B1020` on `#8FB0FF` | 8.86:1 | 4.5:1 | Pass |
 
 ### High contrast (light)
 
@@ -96,6 +112,14 @@ Ratios measured from the colours the page actually uses. Text needs 4.5:1, borde
 | Move dot ring on dark square | `#FFFFFF` on `#0A3A8C` | 10.52:1 | 3:1 | Pass |
 | Move dot ring on light square | `#000000` on `#FFF3A3` | 18.60:1 | 3:1 | Pass |
 | Board edge (outline) against page | `#000000` on `#FFFFFF` | 21.00:1 | 3:1 | Pass |
+| Lesson goal text on its tint | `#000000` on `#FFFFFF` | 21.00:1 | 4.5:1 | Pass |
+| Correct feedback text on its tint | `#000000` on `#FFFFFF` | 21.00:1 | 4.5:1 | Pass |
+| Correct feedback border | `#005A1E` on `#FFFFFF` | 8.46:1 | 3:1 | Pass |
+| Error message text on its tint | `#000000` on `#FFFFFF` | 21.00:1 | 4.5:1 | Pass |
+| Error border on its tint | `#7A2E00` on `#FFFFFF` | 9.47:1 | 3:1 | Pass |
+| Text links | `#0030B8` on `#FFFFFF` | 9.93:1 | 4.5:1 | Pass |
+| Secondary text on tinted rows | `#000000` on `#FFFFFF` | 21.00:1 | 4.5:1 | Pass |
+| Selected tab text | `#FFFFFF` on `#0030B8` | 9.93:1 | 4.5:1 | Pass |
 
 ### High contrast (dark)
 
@@ -124,62 +148,86 @@ Ratios measured from the colours the page actually uses. Text needs 4.5:1, borde
 | Move dot ring on dark square | `#FFFFFF` on `#0A3A8C` | 10.52:1 | 3:1 | Pass |
 | Move dot ring on light square | `#000000` on `#FFF3A3` | 18.60:1 | 3:1 | Pass |
 | Board edge (outline) against page | `#FFFFFF` on `#000000` | 21.00:1 | 3:1 | Pass |
+| Lesson goal text on its tint | `#FFFFFF` on `#000000` | 21.00:1 | 4.5:1 | Pass |
+| Correct feedback text on its tint | `#FFFFFF` on `#000000` | 21.00:1 | 4.5:1 | Pass |
+| Correct feedback border | `#7CFF9B` on `#000000` | 16.63:1 | 3:1 | Pass |
+| Error message text on its tint | `#FFFFFF` on `#000000` | 21.00:1 | 4.5:1 | Pass |
+| Error border on its tint | `#FFB000` on `#000000` | 11.46:1 | 3:1 | Pass |
+| Text links | `#FFE500` on `#000000` | 16.46:1 | 4.5:1 | Pass |
+| Secondary text on tinted rows | `#FFFFFF` on `#000000` | 21.00:1 | 4.5:1 | Pass |
+| Selected tab text | `#000000` on `#FFE500` | 16.46:1 | 4.5:1 | Pass |
 
 ### Calm (light)
 
 | What | Colours | Ratio | Needs | Result |
 |---|---|---|---|---|
-| Body text on page | `#111820` on `#F4F6F8` | 16.49:1 | 4.5:1 | Pass |
-| Body text on cards | `#111820` on `#FFFFFF` | 17.87:1 | 4.5:1 | Pass |
-| Secondary text on page | `#46525F` on `#F4F6F8` | 7.36:1 | 4.5:1 | Pass |
-| Secondary text on cards | `#46525F` on `#FFFFFF` | 7.98:1 | 4.5:1 | Pass |
+| Body text on page | `#0F1720` on `#F4F6F9` | 16.67:1 | 4.5:1 | Pass |
+| Body text on cards | `#0F1720` on `#FFFFFF` | 18.05:1 | 4.5:1 | Pass |
+| Secondary text on page | `#4A5563` on `#F4F6F9` | 7.00:1 | 4.5:1 | Pass |
+| Secondary text on cards | `#4A5563` on `#FFFFFF` | 7.58:1 | 4.5:1 | Pass |
 | Primary button text | `#FFFFFF` on `#3F6E62` | 5.80:1 | 4.5:1 | Pass |
 | Alert banner text | `#FFFFFF` on `#6B4E3D` | 7.55:1 | 4.5:1 | Pass |
 | Success banner text | `#FFFFFF` on `#3F6E62` | 5.80:1 | 4.5:1 | Pass |
 | Correct feedback text | `#0B6B35` on `#FFFFFF` | 6.63:1 | 4.5:1 | Pass |
-| Error banner border | `#92400E` on `#FFFFFF` | 7.09:1 | 3:1 | Pass |
+| Error banner border | `#8A4B00` on `#FFFFFF` | 6.80:1 | 3:1 | Pass |
 | Square name on light square | `#17212C` on `#E3E7E1` | 13.01:1 | 4.5:1 | Pass |
 | Square name on dark square | `#FFFFFF` on `#5A7066` | 5.32:1 | 4.5:1 | Pass |
-| Rank and file labels | `#FFFFFF` on `#1E2B3A` | 14.37:1 | 4.5:1 | Pass |
-| Button and input borders on cards | `#6B7785` on `#FFFFFF` | 4.56:1 | 3:1 | Pass |
-| Input border on page | `#6B7785` on `#F4F6F8` | 4.21:1 | 3:1 | Pass |
+| Rank and file labels | `#FFFFFF` on `#1B2533` | 15.45:1 | 4.5:1 | Pass |
+| Button and input borders on cards | `#6B7684` on `#FFFFFF` | 4.62:1 | 3:1 | Pass |
+| Input border on page | `#6B7684` on `#F4F6F9` | 4.26:1 | 3:1 | Pass |
 | Selected and primary controls on cards | `#3F6E62` on `#FFFFFF` | 5.80:1 | 3:1 | Pass |
-| Focus outline on page | `#111820` on `#F4F6F8` | 16.49:1 | 3:1 | Pass |
-| Focus outline on cards | `#111820` on `#FFFFFF` | 17.87:1 | 3:1 | Pass |
+| Focus outline on page | `#0F1720` on `#F4F6F9` | 16.67:1 | 3:1 | Pass |
+| Focus outline on cards | `#0F1720` on `#FFFFFF` | 18.05:1 | 3:1 | Pass |
 | Black edge of white pieces on light square | `#000000` on `#E3E7E1` | 16.78:1 | 3:1 | Pass |
 | White edge of black pieces on dark square | `#FFFFFF` on `#5A7066` | 5.32:1 | 3:1 | Pass |
 | Light square against dark square | `#E3E7E1` on `#5A7066` | 4.26:1 | 3:1 | Pass |
 | Move dot ring on dark square | `#FFFFFF` on `#5A7066` | 5.32:1 | 3:1 | Pass |
 | Move dot ring on light square | `#000000` on `#E3E7E1` | 16.78:1 | 3:1 | Pass |
-| Board edge (outline) against page | `#6B7785` on `#F4F6F8` | 4.21:1 | 3:1 | Pass |
+| Board edge (outline) against page | `#6B7684` on `#F4F6F9` | 4.26:1 | 3:1 | Pass |
+| Lesson goal text on its tint | `#0F1720` on `#E3EEEA` | 15.20:1 | 4.5:1 | Pass |
+| Correct feedback text on its tint | `#0F1720` on `#E5F4EA` | 15.86:1 | 4.5:1 | Pass |
+| Correct feedback border | `#0B6B35` on `#E5F4EA` | 5.83:1 | 3:1 | Pass |
+| Error message text on its tint | `#0F1720` on `#FBF0E1` | 16.03:1 | 4.5:1 | Pass |
+| Error border on its tint | `#8A4B00` on `#FBF0E1` | 6.04:1 | 3:1 | Pass |
+| Text links | `#3F6E62` on `#FFFFFF` | 5.80:1 | 4.5:1 | Pass |
+| Secondary text on tinted rows | `#4A5563` on `#EDF0F4` | 6.63:1 | 4.5:1 | Pass |
+| Selected tab text | `#FFFFFF` on `#3F6E62` | 5.80:1 | 4.5:1 | Pass |
 
 ### Calm (dark)
 
 | What | Colours | Ratio | Needs | Result |
 |---|---|---|---|---|
-| Body text on page | `#E8EDF3` on `#10151C` | 15.57:1 | 4.5:1 | Pass |
-| Body text on cards | `#E8EDF3` on `#18202A` | 13.95:1 | 4.5:1 | Pass |
-| Secondary text on page | `#B4C0CE` on `#10151C` | 9.92:1 | 4.5:1 | Pass |
-| Secondary text on cards | `#B4C0CE` on `#18202A` | 8.89:1 | 4.5:1 | Pass |
+| Body text on page | `#EEF2F6` on `#0D1117` | 16.82:1 | 4.5:1 | Pass |
+| Body text on cards | `#EEF2F6` on `#161B22` | 15.38:1 | 4.5:1 | Pass |
+| Secondary text on page | `#AEB8C4` on `#0D1117` | 9.42:1 | 4.5:1 | Pass |
+| Secondary text on cards | `#AEB8C4` on `#161B22` | 8.61:1 | 4.5:1 | Pass |
 | Primary button text | `#0B0F14` on `#8CC2B2` | 9.59:1 | 4.5:1 | Pass |
 | Alert banner text | `#FFFFFF` on `#6B4E3D` | 7.55:1 | 4.5:1 | Pass |
 | Success banner text | `#FFFFFF` on `#3F6E62` | 5.80:1 | 4.5:1 | Pass |
-| Correct feedback text | `#8CC2B2` on `#18202A` | 8.19:1 | 4.5:1 | Pass |
-| Error banner border | `#FBBF24` on `#18202A` | 9.84:1 | 3:1 | Pass |
+| Correct feedback text | `#8CC2B2` on `#161B22` | 8.63:1 | 4.5:1 | Pass |
+| Error banner border | `#FBBF24` on `#161B22` | 10.36:1 | 3:1 | Pass |
 | Square name on light square | `#17212C` on `#E3E7E1` | 13.01:1 | 4.5:1 | Pass |
 | Square name on dark square | `#FFFFFF` on `#5A7066` | 5.32:1 | 4.5:1 | Pass |
 | Rank and file labels | `#FFFFFF` on `#05080C` | 20.07:1 | 4.5:1 | Pass |
-| Button and input borders on cards | `#7D8B9B` on `#18202A` | 4.72:1 | 3:1 | Pass |
-| Input border on page | `#7D8B9B` on `#10151C` | 5.27:1 | 3:1 | Pass |
-| Selected and primary controls on cards | `#8CC2B2` on `#18202A` | 8.19:1 | 3:1 | Pass |
-| Focus outline on page | `#E8EDF3` on `#10151C` | 15.57:1 | 3:1 | Pass |
-| Focus outline on cards | `#E8EDF3` on `#18202A` | 13.95:1 | 3:1 | Pass |
+| Button and input borders on cards | `#7D8B9B` on `#161B22` | 4.97:1 | 3:1 | Pass |
+| Input border on page | `#7D8B9B` on `#0D1117` | 5.44:1 | 3:1 | Pass |
+| Selected and primary controls on cards | `#8CC2B2` on `#161B22` | 8.63:1 | 3:1 | Pass |
+| Focus outline on page | `#EEF2F6` on `#0D1117` | 16.82:1 | 3:1 | Pass |
+| Focus outline on cards | `#EEF2F6` on `#161B22` | 15.38:1 | 3:1 | Pass |
 | Black edge of white pieces on light square | `#000000` on `#E3E7E1` | 16.78:1 | 3:1 | Pass |
 | White edge of black pieces on dark square | `#FFFFFF` on `#5A7066` | 5.32:1 | 3:1 | Pass |
 | Light square against dark square | `#E3E7E1` on `#5A7066` | 4.26:1 | 3:1 | Pass |
 | Move dot ring on dark square | `#FFFFFF` on `#5A7066` | 5.32:1 | 3:1 | Pass |
 | Move dot ring on light square | `#000000` on `#E3E7E1` | 16.78:1 | 3:1 | Pass |
-| Board edge (outline) against page | `#7D8B9B` on `#10151C` | 5.27:1 | 3:1 | Pass |
+| Board edge (outline) against page | `#7D8B9B` on `#0D1117` | 5.44:1 | 3:1 | Pass |
+| Lesson goal text on its tint | `#EEF2F6` on `#1D2E29` | 12.66:1 | 4.5:1 | Pass |
+| Correct feedback text on its tint | `#EEF2F6` on `#12301F` | 12.71:1 | 4.5:1 | Pass |
+| Correct feedback border | `#8CC2B2` on `#12301F` | 7.13:1 | 3:1 | Pass |
+| Error message text on its tint | `#EEF2F6` on `#2E2410` | 13.57:1 | 4.5:1 | Pass |
+| Error border on its tint | `#FBBF24` on `#2E2410` | 9.14:1 | 3:1 | Pass |
+| Text links | `#8CC2B2` on `#161B22` | 8.63:1 | 4.5:1 | Pass |
+| Secondary text on tinted rows | `#AEB8C4` on `#1F2630` | 7.58:1 | 4.5:1 | Pass |
+| Selected tab text | `#0B0F14` on `#8CC2B2` | 9.59:1 | 4.5:1 | Pass |
 
 ## Zoom, reflow, text spacing and target size
 
@@ -192,41 +240,41 @@ Ratios measured from the colours the page actually uses. Text needs 4.5:1, borde
 | 200% zoom (1280x1024) | options | no | no | none | no board on this view | no |
 | 200% zoom (1280x1024) | lesson | no | no | none | 54px | no |
 | 200% zoom (1280x1024) | tutorial | no | no | none | 54px | no |
-| 400% zoom (1280x1024) | play | no | no | none | 45px | yes |
+| 400% zoom (1280x1024) | play | no | no | none | 44px | yes |
 | 400% zoom (1280x1024) | learn | no | no | none | no board on this view | no |
 | 400% zoom (1280x1024) | options | no | no | none | no board on this view | no |
-| 400% zoom (1280x1024) | lesson | no | no | none | 45px | yes |
-| 400% zoom (1280x1024) | tutorial | no | no | none | 45px | yes |
-| 400 px wide phone | play | no | no | none | 45px | yes |
+| 400% zoom (1280x1024) | lesson | no | no | none | 44px | yes |
+| 400% zoom (1280x1024) | tutorial | no | no | none | 44px | yes |
+| 400 px wide phone | play | no | no | none | 50px | no |
 | 400 px wide phone | learn | no | no | none | no board on this view | no |
 | 400 px wide phone | options | no | no | none | no board on this view | no |
-| 400 px wide phone | lesson | no | no | none | 45px | yes |
-| 400 px wide phone | tutorial | no | no | none | 45px | yes |
-| 360 px phone | play | no | no | none | 45px | yes |
+| 400 px wide phone | lesson | no | no | none | 50px | no |
+| 400 px wide phone | tutorial | no | no | none | 50px | no |
+| 360 px phone | play | no | no | none | 45px | no |
 | 360 px phone | learn | no | no | none | no board on this view | no |
 | 360 px phone | options | no | no | none | no board on this view | no |
-| 360 px phone | lesson | no | no | none | 45px | yes |
-| 360 px phone | tutorial | no | no | none | 45px | yes |
-| 390 px phone | play | no | no | none | 45px | yes |
+| 360 px phone | lesson | no | no | none | 45px | no |
+| 360 px phone | tutorial | no | no | none | 45px | no |
+| 390 px phone | play | no | no | none | 49px | no |
 | 390 px phone | learn | no | no | none | no board on this view | no |
 | 390 px phone | options | no | no | none | no board on this view | no |
-| 390 px phone | lesson | no | no | none | 45px | yes |
-| 390 px phone | tutorial | no | no | none | 45px | yes |
-| laptop | play | no | no | none | 62px | no |
+| 390 px phone | lesson | no | no | none | 49px | no |
+| 390 px phone | tutorial | no | no | none | 49px | no |
+| laptop | play | no | no | none | 63px | no |
 | laptop | learn | no | no | none | no board on this view | no |
 | laptop | options | no | no | none | no board on this view | no |
-| laptop | lesson | no | no | none | 62px | no |
-| laptop | tutorial | no | no | none | 62px | no |
-| short laptop | play | no | no | none | 47px | no |
+| laptop | lesson | no | no | none | 63px | no |
+| laptop | tutorial | no | no | none | 63px | no |
+| short laptop | play | no | no | none | 48px | no |
 | short laptop | learn | no | no | none | no board on this view | no |
 | short laptop | options | no | no | none | no board on this view | no |
-| short laptop | lesson | no | no | none | 47px | no |
-| short laptop | tutorial | no | no | none | 47px | no |
-| tablet | play | no | no | none | 97px | no |
+| short laptop | lesson | no | no | none | 48px | no |
+| short laptop | tutorial | no | no | none | 48px | no |
+| tablet | play | no | no | none | 96px | no |
 | tablet | learn | no | no | none | no board on this view | no |
 | tablet | options | no | no | none | no board on this view | no |
-| tablet | lesson | no | no | none | 97px | no |
-| tablet | tutorial | no | no | none | 97px | no |
+| tablet | lesson | no | no | none | 96px | no |
+| tablet | tutorial | no | no | none | 96px | no |
 | phone on its side | play | no | no | none | 45px | no |
 | phone on its side | learn | no | no | none | no board on this view | no |
 | phone on its side | options | no | no | none | no board on this view | no |
@@ -239,90 +287,90 @@ Ratios measured from the colours the page actually uses. Text needs 4.5:1, borde
 
 1. Skip to main content
 2. Skip to the chessboard
-3. Speech Off
-4. How to use
-5. Repeat
-6. e2, white pawn (gridcell)
-7. Type a move or command
-8. Go
-9. Describe board
-10. Last move
-11. Undo
-12. Game options
-13. Everything the app has announced, newest first
-14. Play
-15. Learn
-16. Access
+3. Play
+4. Learn
+5. Access
+6. Speech off
+7. Help: how to use the app
+8. Repeat last message
+9. e2, white pawn (gridcell)
+10. Type a move or command
+11. Go
+12. Describe board
+13. Last move
+14. Undo
+15. More
+16. Captions every message, newest first
 
 ### learn
 
 1. Skip to main content
 2. Skip to the chessboard
-3. Speech Off
-4. How to use
-5. Repeat
-6. Start here: The board map
-7. Start lesson: The rook
-8. Start lesson: The bishop
-9. Start lesson: The queen
-10. Start lesson: The knight
-11. Start lesson: The pawn
-12. Start lesson: The king
-13. Start lesson: Captures and piece values
-14. Start lesson: Check
-15. Start lesson: Your first checkmate
-16. Start lesson: Simple tactics
-17. Start lesson: Stalemate and draws
-18. Start lesson: Special moves
-19. Start lesson: Your first four moves
-20. pawn, 1 point. Moves forward one square, or two on its first move. Captures one square diagonally forward. Vibration: 1 short.
-21. knight, 3 points. Moves in an L: two squares one way, then one to the side. Jumps over other pieces. Vibration: 2 short.
-22. bishop, 3 points. Moves diagonally, as far as it likes. Stays on one colour of square. Vibration: 3 short.
-23. rook, 5 points. Moves in straight lines along files and ranks, as far as it likes. Vibration: 1 long.
-24. queen, 9 points. Moves in any straight line or diagonal, as far as she likes. Vibration: 2 long.
-25. king, Priceless. Moves one square in any direction. If he is trapped in check, the game is lost. Vibration: 3 long.
-26. Play
-27. Learn
-28. Access
+3. Play
+4. Learn
+5. Access
+6. Speech off
+7. Help: how to use the app
+8. Repeat last message
+9. Start here: The board map
+10. Start lesson: The rook
+11. Start lesson: The bishop
+12. Start lesson: The queen
+13. Start lesson: The knight
+14. Start lesson: The pawn
+15. Start lesson: The king
+16. Start lesson: Captures and piece values
+17. Start lesson: Check
+18. Start lesson: Your first checkmate
+19. Start lesson: Simple tactics
+20. Start lesson: Stalemate and draws
+21. Start lesson: Special moves
+22. Start lesson: Your first four moves
+23. pawn, 1 point. Moves forward one square, or two on its first move. Captures one square diagonally forward. Vibration: 1 short.
+24. knight, 3 points. Moves in an L: two squares one way, then one to the side. Jumps over other pieces. Vibration: 2 short.
+25. bishop, 3 points. Moves diagonally, as far as it likes. Stays on one colour of square. Vibration: 3 short.
+26. rook, 5 points. Moves in straight lines along files and ranks, as far as it likes. Vibration: 1 long.
+27. queen, 9 points. Moves in any straight line or diagonal, as far as she likes. Vibration: 2 long.
+28. king, Priceless. Moves one square in any direction. If he is trapped in check, the game is lost. Vibration: 3 long.
 
 ### options
 
 1. Skip to main content
 2. Skip to the chessboard
-3. Speech Off
-4. How to use
-5. Repeat
-6. I use a screen readerVoiceOver, TalkBack
-7. Speak to meThis app reads aloud, with to
-8. I use braille or touchShort messages for
-9. I am Deaf or hard of hearingCaptions and
-10. I have low visionHigh contrast, letters 
-11. I prefer things calmSoft colours, no fla
-12. App speech (switch)
-13. Voice
-14. Voice speed
-15. Voice volume
-16. Square tones and alert sounds (switch)
-17. Test voice
-18. Test tones
-19. Test vibration
-20. Text size
-21. High contrast (switch)
-22. Light or dark
-23. Letters instead of piece shapes (switch)
-24. Square names on every square (switch)
-25. Show where a piece can go (switch)
-26. Vibration patterns (switch)
-27. Explore by dragging a finger (switch)
-28. Short messages (switch)
-29. Visual alerts (switch)
-30. Calm mode (switch)
-31. Computer strength
-32. If the app's speech does not work
-33. Shortcuts table (region)
-34. Play
-35. Learn
-36. Access
+3. Play
+4. Learn
+5. Access
+6. Speech off
+7. Help: how to use the app
+8. Repeat last message
+9. I use a screen readerVoiceOver, TalkBack
+10. Speak to meThis app reads aloud, with to
+11. I use braille or touchShort messages for
+12. I am Deaf or hard of hearingCaptions and
+13. I have low visionHigh contrast, letters 
+14. I prefer things calmSoft colours, no fla
+15. App speech (switch)
+16. Voice
+17. Voice speed
+18. Voice volume
+19. Square tones and alert sounds (switch)
+20. Test voice
+21. Test tones
+22. Test vibration
+23. Text size
+24. High contrast (switch)
+25. Light or dark
+26. Letters instead of piece shapes (switch)
+27. Square names on every square (switch)
+28. Show where a piece can go (switch)
+29. Vibration patterns (switch)
+30. Explore by dragging a finger (switch)
+31. Short messages (switch)
+32. Visual alerts (switch)
+33. Calm mode (switch)
+34. Computer strength
+35. If the app's speech does not work
+36. Shortcuts table (region)
 
 ## Accessibility tree
 
@@ -337,10 +385,14 @@ As Chrome exposes it to screen readers (Playwright ARIA snapshot). The board row
   - /url: "#board"
 - banner:
   - heading "Touchpoint Chess" [level=1]
+  - navigation "Sections":
+    - button "Play"
+    - button "Learn"
+    - button "Access"
   - button "Speech"
-  - button "How to use"
+  - 'button "Help: how to use the app"': Help
 - region "Messages":
-  - button "Repeat"
+  - button "Repeat last message"
 - main:
   - region "Play":
     - heading "Play" [level=2]
@@ -368,20 +420,12 @@ As Chrome exposes it to screen readers (Playwright ARIA snapshot). The board row
       - /placeholder: e4, Nf3, board, help
     - button "Go"
     - paragraph: Works with braille displays and voice dictation. Type help for every command.
-    - button "Describe board"
-    - button "Last move"
-    - button "Undo"
-    - group: Game options
-    - region "Captions":
-      - heading "Captions" [level=2]
-      - list "Everything the app has announced, newest first":
-        - listitem:
-          - time: 22:06
-          - text: Welcome. You play White. Tap a piece, use the arrow keys, or type a move like e4.
-- navigation "Sections":
-  - button "Play"
-  - button "Learn"
-  - button "Access"
+    - group "Game tools":
+      - button "Describe board"
+      - button "Last move"
+      - button "Undo"
+      - button "More"
+    - group: Captions every message, newest first
 ```
 
 ### learn
@@ -393,10 +437,14 @@ As Chrome exposes it to screen readers (Playwright ARIA snapshot). The board row
   - /url: "#board"
 - banner:
   - heading "Touchpoint Chess" [level=1]
+  - navigation "Sections":
+    - button "Play"
+    - button "Learn"
+    - button "Access"
   - button "Speech"
-  - button "How to use"
+  - 'button "Help: how to use the app"': Help
 - region "Messages":
-  - button "Repeat"
+  - button "Repeat last message"
 - main:
   - region "Learn":
     - heading "Learn" [level=2]
@@ -405,7 +453,7 @@ As Chrome exposes it to screen readers (Playwright ARIA snapshot). The board row
     - list "Learn":
       - listitem:
         - heading "1. The board map" [level=3]
-        - text: → Up next
+        - text: Up next
         - paragraph: "The board has 64 squares. Each one has a name: a letter, then a number. The letter is the file, a to h from left to right. The number is the rank, 1 to 8 from White's side to Black's side."
         - 'button "Start here: The board map"': Start here
       - listitem:
@@ -523,10 +571,6 @@ As Chrome exposes it to screen readers (Playwright ARIA snapshot). The board row
     - region "How Touchpoint works":
       - heading "How Touchpoint works" [level=2]
       - paragraph: "Every square is a labelled control, so VoiceOver and TalkBack read it aloud as \"e4, white pawn\", and refreshable braille displays show the same text. Deaf players get a caption for every move and a visual alert for check. Deafblind players can type moves from a braille keyboard, and on Android they can feel the board by vibration. Nothing relies on colour alone: selected, last-move and check squares each have their own pattern."
-- navigation "Sections":
-  - button "Play"
-  - button "Learn"
-  - button "Access"
 ```
 
 ### options
@@ -538,10 +582,14 @@ As Chrome exposes it to screen readers (Playwright ARIA snapshot). The board row
   - /url: "#board"
 - banner:
   - heading "Touchpoint Chess" [level=1]
+  - navigation "Sections":
+    - button "Play"
+    - button "Learn"
+    - button "Access"
   - button "Speech"
-  - button "How to use"
+  - 'button "Help: how to use the app"': Help
 - region "Messages":
-  - button "Repeat"
+  - button "Repeat last message"
 - main:
   - region "Access settings":
     - heading "Access settings" [level=2]
@@ -625,8 +673,8 @@ As Chrome exposes it to screen readers (Playwright ARIA snapshot). The board row
         - listitem: Low vision
         - listitem: Learning
       - text: Square names on every square
-      - switch "Square names on every square" [checked]
-      - paragraph: Prints e4, f5 and so on in the corner of each square, so you never have to count.
+      - switch "Square names on every square"
+      - paragraph: Prints e4, f5 and so on in the corner of every square, so you never have to count. When it is off, rank numbers and file letters still run along the edges of the board.
       - list "Helps with":
         - listitem: Learning
         - listitem: Low vision
@@ -721,10 +769,6 @@ As Chrome exposes it to screen readers (Playwright ARIA snapshot). The board row
               - cell "N"
               - cell "Next lesson step"
       - paragraph: "In the command box you can also type: board, last, status, undo, flip, new, again, stop, speech on, speech off, tutorial, hint, next, repeat, leave, moves e2, attacks e4, rank 4, file e, about knight."
-- navigation "Sections":
-  - button "Play"
-  - button "Learn"
-  - button "Access"
 ```
 
 ### lesson
@@ -736,15 +780,20 @@ As Chrome exposes it to screen readers (Playwright ARIA snapshot). The board row
   - /url: "#board"
 - banner:
   - heading "Touchpoint Chess" [level=1]
+  - navigation "Sections":
+    - button "Play"
+    - button "Learn"
+    - button "Access"
   - button "Speech"
-  - button "How to use"
+  - 'button "Help: how to use the app"': Help
 - region "Messages":
-  - button "Repeat"
+  - button "Repeat last message"
 - main:
   - region "Play":
     - heading "Play" [level=2]
     - region "The rook":
       - text: Piece · step 1 of 3
+      - button "Leave lesson"
       - heading "The rook" [level=2]
       - paragraph: The rook moves in straight lines along files and ranks, as far as it likes. It cannot jump over other pieces.
       - paragraph: Move the rook from a1 straight up the a-file to a7.
@@ -769,28 +818,16 @@ As Chrome exposes it to screen readers (Playwright ARIA snapshot). The board row
         - gridcell "h7, empty"
     - button "Show hint"
     - button "Repeat goal"
-    - button "Leave lesson"
     - text: Type a move or command
     - textbox "Type a move or command":
       - /placeholder: e4, Nf3, board, help
     - button "Go"
     - paragraph: Works with braille displays and voice dictation. Type help for every command.
-    - button "Describe board"
-    - button "Last move"
-    - button "Restart step"
-    - group: Game options
-    - region "Captions":
-      - heading "Captions" [level=2]
-      - list "Everything the app has announced, newest first":
-        - listitem:
-          - time: 22:06
-          - text: The rook. The rook moves in straight lines along files and ranks, as far as it likes. It cannot jump over other pieces. Move the rook from a1 straight up the a-file to a7.
-        - listitem:
-          - time: 22:06
-          - text: Welcome. You play White. Tap a piece, use the arrow keys, or type a move like e4.
-- navigation "Sections":
-  - button "Play"
-  - button "Learn"
-  - button "Access"
+    - group "Game tools":
+      - button "Describe board"
+      - button "Last move"
+      - button "Restart step"
+      - button "More"
+    - group: Captions every message, newest first
 ```
 
