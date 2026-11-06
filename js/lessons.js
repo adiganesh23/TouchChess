@@ -173,7 +173,7 @@ const TPC_LESSONS = [
 
 /* The "How to use" tour. It runs on the real board like a lesson, but each step checks that the
    learner did one thing the app can do. Extra step types:
-     info      Read, then choose Next. `presets: true` offers the quick setups; `settings: true` shows
+     info      Read, then choose Next. `presets: true` offers the ways to play; `settings: true` shows
                speech, text size and contrast controls.
      do        Do the action named by `expect`: board (B), last (L), moves (M) or repeat (P).
      find      As in lessons. In the tour, arriving on the square counts, so arrow keys are enough.
@@ -183,7 +183,7 @@ const TPC_TOUR = {
   id: 'tour', title: 'How to use Touchpoint', tag: 'How to use', tour: true,
   intro: 'This short tour shows you how the app works. You try each thing yourself and the tour tells you when it worked. It takes about three minutes. Skip it any time, and open it again with the Help button at the top.',
   steps: [
-    { type: 'info', presets: true, fen: TPC_START, goal: 'If you use a screen reader such as VoiceOver, TalkBack, NVDA or JAWS, keep it on. The app is built to work with it. You can pick a quick setup below, or just choose Next step.' },
+    { type: 'info', fen: TPC_START, goal: 'If you use a screen reader such as VoiceOver, TalkBack, NVDA or JAWS, keep it on. The app is built to work with it. Choose Next step to begin.' },
     { type: 'find', start: 'e2', fen: TPC_START, target: 'e4', goal: 'Moving around. Go to the board and move to the square e4. Keyboard: press Tab until you reach the board, then use the arrow keys. Each square says its name and what is on it, like "e2, white pawn". Touch: tap e4. Screen reader on a phone: swipe until you hear e4, then double-tap.', why: 'You found e4. Letters are files, a to h from left to right. Numbers are ranks, 1 to 8 going away from you.' },
     { fen: TPC_START, from: 'e2', to: 'e4', goal: 'Pick up and drop. Go to the white pawn on e2 and press Enter or Space to pick it up. Touch: tap it. You will hear where it can go. Then go to e4 and press Enter again to drop it there. To put a piece back, press Escape.', why: 'That is how every move is made: pick up, then drop.' },
     { fen: 'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 2', from: 'g1', to: 'f3', typed: true, goal: 'Type a move. Black answered with a pawn to e5. Go to the box called "Type a move or command", type Nf3 and press Enter. That means knight to f3. Typing g1 f3 works too.', why: 'Typing works with braille displays and voice dictation as well.' },

@@ -52,6 +52,24 @@
 </section>
 
 <main class="wrap" id="main" tabindex="-1">
+  <!-- FIRST VISIT: a short screen, in the page, that sets things up in one choice -->
+  <section id="view-welcome" class="section view welcome" aria-labelledby="welH" hidden>
+    <div id="welPick" class="wel-step">
+      <div class="wel-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <h2 id="welH" tabindex="-1">How do you want to play?</h2>
+      <p>Pick the one that fits you best. It switches on the right settings, and you can change anything later on the Access tab.</p>
+      <div class="modes" id="welModes" role="group" aria-labelledby="welH"></div>
+      <button class="link-btn" type="button" id="welSkip">Skip for now</button>
+    </div>
+    <div id="welDone" class="wel-step" hidden>
+      <span class="wel-badge" aria-hidden="true"><span class="ic" data-icon="check"></span></span>
+      <h2 id="welDoneH" tabindex="-1">You're set</h2>
+      <p id="welDoneText"></p>
+      <button class="btn primary big" type="button" id="welTour">Take the 3-minute tour</button>
+      <button class="btn big" type="button" id="welPlay">Start playing</button>
+    </div>
+  </section>
+
   <!-- PLAY -->
   <section id="view-play" class="view" aria-labelledby="playH">
     <h2 id="playH" class="sr" tabindex="-1">Play</h2>

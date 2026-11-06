@@ -398,6 +398,18 @@ function announceMove(m, byCpu) {
   const st = gameState(), lead = byCpu ? 'Computer: ' : '';
   announce(`${lead}${describeMove(m)} ${st.text}`, st.level, { haptic: st.level === 'info' ? PAT[m.piece] : null });
 }
+/* A moved piece slides from its old square (200ms). Never with reduced motion or Calm mode. */
+const motionOK = () => !settings.calm && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+function animateMove(m) {
+  if (!m || !motionOK() || !cells[m.from] || !cells[m.to]) return;
+  const cell = cells[m.to], el = cell.querySelector('.pc,.pl');
+  if (!el || !el.animate) return;
+  const a = cells[m.from].getBoundingClientRect(), b = cell.getBoundingClientRect(), base = getComputedStyle(el).transform;
+  const end = base === 'none' ? 'none' : base;
+  cell.classList.add('moving');
+  el.animate([{ transform: `translate(${a.left - b.left}px, ${a.top - b.top}px) ${end === 'none' ? '' : end}` }, { transform: end }], { duration: 200, easing: 'cubic-bezier(.2,.8,.2,1)' })
+    .finished.catch(() => {}).then(() => cell.classList.remove('moving'));
+}
 function clearPending() { clearTimeout(S.timer); S.timer = null; S.busy = false; }
 function saveGame() {
   if (S.lesson) return;
@@ -412,7 +424,7 @@ function maybeCpu() {
     S.busy = false; S.timer = null;
     if (!r) return;
     S.last = g.move({ from: r.from, to: r.to, promotion: r.promotion });
-    saveGame(); render(); announceMove(S.last, true);
+    saveGame(); render(); animateMove(S.last); announceMove(S.last, true);
   }, settings.calm ? 1300 : 700);
 }
 function needsPromotion(from, to) {
@@ -438,7 +450,7 @@ async function makeMove(from, to, promo) {
   const m = g.move({ from, to, promotion });
   if (!m) return announce(`${from} to ${to} is not a legal move.`, 'error');
   S.selected = null; S.last = m; S.hint = null; S.focus = to;
-  saveGame(); render(); announceMove(m, false);
+  saveGame(); render(); animateMove(m); announceMove(m, false);
   maybeCpu();
 }
 function tryMove(from, to, promo) {
@@ -605,6 +617,7 @@ function lessonMove(from, to, promotion) {
   const ok = st.type === 'mate' ? mate : st.type === 'check' ? g.in_check() : (from === st.from && to === st.to);
   if (ok) {
     S.last = m; S.focus = to;
+    requestAnimationFrame(() => animateMove(m));
     stepPassed(`Correct. ${describeMove(m)} ${mate ? 'Checkmate! ' : ''}${st.why}`);
     return;
   }
@@ -625,7 +638,8 @@ function nextStep() {
   const nxt = LESSONS[LESSONS.indexOf(S.lesson) + 1];
   $('lcEyebrow').textContent = 'Lesson complete';
   $('lcGoal').hidden = true; $('lcIntro').hidden = true;
-  $('lcFeedback').textContent = `Lesson complete: ${S.lesson.title}. ${nxt ? `Next up: ${nxt.title}.` : 'You finished every lesson. Try a game against the computer.'}`;
+  const count = LESSONS.filter(l => done[l.id]).length;
+  $('lcFeedback').textContent = `Lesson complete: ${S.lesson.title}. That is ${count} of ${LESSONS.length} lessons. ${nxt ? `Next up: ${nxt.title}.` : 'You finished every lesson. Try a game against the computer.'}`;
   $('lcFeedback').hidden = false;
   $('lcSteps').innerHTML = S.lesson.steps.map(() => '<span class="on"></span>').join('');
   $('lcHint').hidden = true; $('lcRepeat').hidden = true; $('lcChoices').hidden = true; $('lessonActions').hidden = true;
@@ -811,10 +825,11 @@ function typedMove(t, low) {
 function repeatGoal() { const st = S.lesson && curStep(); if (st) announce(st.goal, 'info'); }
 
 /* ---------- Views ---------- */
-const VIEW_TITLES = { play: 'Play', learn: 'Learn', options: 'Access settings' };
-const VIEW_HEADS = { play: 'playH', learn: 'learnH', options: 'optH' };
+const VIEW_TITLES = { play: 'Play', learn: 'Learn', options: 'Access settings', welcome: 'Welcome' };
+const VIEW_HEADS = { play: 'playH', learn: 'learnH', options: 'optH', welcome: 'welH' };
 function show(v, moveFocus = true) {
-  for (const id of ['play', 'learn', 'options']) $('view-' + id).hidden = id !== v;
+  for (const id of ['play', 'learn', 'options', 'welcome']) $('view-' + id).hidden = id !== v;
+  document.body.classList.toggle('welcoming', v === 'welcome');
   document.querySelectorAll('nav.tabs button').forEach(b => { if (b.dataset.view === v) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
   document.title = `${VIEW_TITLES[v]} - Touchpoint Chess`;
   window.scrollTo(0, 0);
@@ -888,10 +903,11 @@ const PRESETS = [
   { id: 'reader', icon: 'reader', label: 'I use a screen reader', detail: 'VoiceOver, TalkBack, NVDA or JAWS reads everything. App speech stays off.', set: { speech: false, sound: false, haptics: true, explore: false, brief: false, flash: true, calm: false, contrast: false, letters: false } },
   { id: 'deaf', icon: 'deaf', label: 'I am Deaf or hard of hearing', detail: 'Captions always open and visual alerts, no sound.', set: { speech: false, sound: false, haptics: true, explore: false, brief: false, flash: true, calm: false, contrast: false, letters: false, captionsOpen: true } }
 ];
-function applyPreset(p) {
+function applyPreset(p, quiet) {
   Object.assign(settings, p.set, { onboarded: true, mode: p.id }); save(); renderPresets();
   syncControls(); applySettings(); $('capBox').open = !!settings.captionsOpen;
-  announce(`Set up: ${p.label}. You can change anything on the Access tab.`, 'success', { forceSpeech: p.id === 'voice' });
+  // On the first-visit screen focus moves to the confirmation, so the live region stays out of it.
+  announce(`Set up: ${p.label}. You can change anything on the Access tab.`, 'success', { forceSpeech: p.id === 'voice', noLive: !!quiet });
 }
 function presetButton(p) {
   const b = document.createElement('button');
@@ -1089,7 +1105,7 @@ boardEl.addEventListener('keydown', e => {
   if (f < 0 || f > 7 || r < 1 || r > 8) { buzz(PAT.edge); return announce('Edge of the board.', 'info'); }
   setFocus(FILES[f] + r, true, true);
 });
-$('skipBoard').addEventListener('click', e => { e.preventDefault(); show('play', false); cells[S.focus].focus(); });
+$('skipBoard').addEventListener('click', e => { e.preventDefault(); if (!settings.onboarded) { settings.onboarded = true; save(); } show('play', false); cells[S.focus].focus(); });
 $('skipMain').addEventListener('click', e => { e.preventDefault(); $('main').focus(); });
 $('cmdForm').addEventListener('submit', e => { e.preventDefault(); const v = $('cmdInput').value; if (!v.trim()) return; $('cmdInput').value = ''; runCommand(v); });
 $('bDescribe').onclick = describeBoard; $('bLast').onclick = lastMove; $('bUndo').onclick = undo;
@@ -1148,5 +1164,29 @@ if (resumed) {
   logAdd(`Welcome back. Your game was saved. ${describeMove(S.last)} ${st.text}`, 'info');
   maybeCpu();
 } else logAdd('Welcome. You play White. Tap a piece, use the arrow keys, or type a move like e4.', 'info');
-if (!settings.onboarded) startTour(null);
+/* First visit: one question, then an offer of the tour. Nothing here is a pop-up, and Skip is always there. */
+function startWelcome() {
+  $('welPick').hidden = false; $('welDone').hidden = true;
+  const box = $('welModes'); box.innerHTML = '';
+  PRESETS.forEach(p => { const b = presetButton(p); b.onclick = () => chooseWelcome(p); box.appendChild(b); });
+  show('welcome');
+  banner.textContent = 'Welcome to Touchpoint Chess. One question first.'; banner.dataset.level = 'info';
+}
+function chooseWelcome(p) {
+  applyPreset(p, true);
+  $('welPick').hidden = true; $('welDone').hidden = false;
+  $('welDoneH').textContent = `You're set: ${p.label}`;
+  $('welDoneText').textContent = `${p.detail} Change anything on the Access tab. The tour shows how to move around the board, pick up pieces and hear the position.`;
+  $('welDoneH').focus();
+}
+function leaveWelcome(tour) {
+  settings.onboarded = true; save();
+  if (tour) return startTour(null);
+  show('play', false); cells[S.focus].focus();
+  announce('Your move. You play White against the computer. Press Help at the top any time.', 'info', { short: 'Your move. You play White.' });
+}
+$('welSkip').onclick = () => leaveWelcome(false);
+$('welTour').onclick = () => leaveWelcome(true);
+$('welPlay').onclick = () => leaveWelcome(false);
+if (!settings.onboarded) startWelcome();
 })();

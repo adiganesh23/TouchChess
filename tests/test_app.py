@@ -46,7 +46,16 @@ for (const k of ['alert', 'confirm', 'prompt']) window[k] = (...a) => { window._
 """
 
 
+OPEN = []
+
+
 def open_page(browser, w=390, h=844, onboarded=True, settings=None, block_sw=True, game=None, session=None, **ctx):
+    # Each check starts from a fresh page; close the old ones so hundreds of idle pages do not slow the run down.
+    while OPEN:
+        try:
+            OPEN.pop().close()
+        except Exception:
+            pass
     c = browser.new_context(viewport={'width': w, 'height': h}, has_touch=w < 500,
                             service_workers='block' if block_sw else 'allow', **ctx)
     s = dict(settings or {})
@@ -57,6 +66,7 @@ def open_page(browser, w=390, h=844, onboarded=True, settings=None, block_sw=Tru
         c.add_init_script("if(!localStorage.getItem('tpc-game'))localStorage.setItem('tpc-game',%s)" % json.dumps(game))
     if session:
         c.add_init_script("sessionStorage.setItem('tpc-speech',%s)" % json.dumps(session))
+    OPEN.append(c)
     p = c.new_page()
     p.errors = []
     p.on('pageerror', lambda e: p.errors.append(str(e)))
@@ -195,6 +205,20 @@ def test_lessons(browser):
     check('the king can never be captured', 'black king' in label(p, 'h7'))
 
 
+def test_motion(browser):
+    p = open_page(browser, settings={'opponent': 'human'})
+    cmd(p, 'e4')
+    check('a move slides the piece into place', p.evaluate("document.querySelector('#sq-e4 .pc').getAnimations().length") == 1)
+    p.click('#sq-d2')
+    check('a picked-up piece lifts (scaled)', 'matrix' in p.evaluate("getComputedStyle(document.querySelector('#sq-d2 .pc')).transform"))
+    for name, kw in [('calm mode', {'settings': {'opponent': 'human', 'calm': True}}), ('reduced motion', {'settings': {'opponent': 'human'}, 'reduced_motion': 'reduce'})]:
+        p = open_page(browser, **kw)
+        cmd(p, 'e4')
+        check(f'no sliding in {name}', p.evaluate("document.querySelector('#sq-e4 .pc').getAnimations().length") == 0)
+        dur = p.evaluate("getComputedStyle(document.querySelector('.sq .pc')).transitionDuration")
+        check(f'no transitions in {name}', dur in ('0s', '0ms'), dur)
+
+
 def test_chess(browser):
     p = open_page(browser, settings={'opponent': 'human'})
     p.click('#sq-e2')
@@ -278,10 +302,18 @@ def test_chess(browser):
 # ---------------------------------------------------------------- tutorial
 
 def test_tutorial(browser):
+    # First visit: one question in the page, then the offer of the tour
     p = open_page(browser, onboarded=False)
-    check('tutorial opens on the first visit, in the page', p.is_visible('#lessonCard') and 'How to use' in p.inner_text('#lcEyebrow') and not p.is_visible('#ask'))
+    check('first visit asks how you want to play, in the page', p.is_visible('#view-welcome') and active(p) == 'welH' and p.locator('#welModes .mode-card').count() == 6 and not p.is_visible('nav.tabs'))
+    names = p.evaluate("[...document.querySelectorAll('#welModes .mode-card .mode-title')].map(e => e.textContent)")
+    check('the four ways to play come first', names[:4] == ['Listen', 'Feel', 'See', 'Calm'], names)
+    ok = tab_to(p, lambda a: p.evaluate("document.activeElement.textContent").startswith('I use a screen reader'))
+    p.keyboard.press('Enter')
+    check('choosing by keyboard confirms it and moves focus there', ok and active(p) == 'welDoneH' and 'screen reader' in p.inner_text('#welDoneH') and p.get_attribute('#bSpeech', 'aria-pressed') == 'false')
+    ok = tab_to(p, 'welTour'); p.keyboard.press('Enter')
+    check('the tour starts from the first-visit screen', ok and p.is_visible('#lessonCard') and 'How to use' in p.inner_text('#lcEyebrow') and p.is_visible('nav.tabs'))
     check('focus starts on the tutorial text', active(p) == 'lcText')
-    check('tutorial offers quick setups and a speech help section', p.locator('#lcChoices .presets button').count() == 6 and p.is_visible('#lcHelp'))
+    check('tutorial has a speech help section', p.is_visible('#lcHelp'))
     on_board = lambda a: a and re.fullmatch(r'[a-h][1-8]', a or '')
     ok = tab_to(p, 'lcNext'); p.keyboard.press('Enter')
     check('tutorial 1: Next by keyboard', ok and 'step 2 of 10' in p.inner_text('#lcEyebrow'))
@@ -334,12 +366,16 @@ def test_tutorial(browser):
     check('tutorial done is remembered', p.evaluate("JSON.parse(localStorage.getItem('tpc-settings')).onboarded") is True)
     check('tutorial run raised no errors', not p.errors, p.errors)
 
-    p = open_page(browser, onboarded=False)
+    p = open_page(browser)
+    p.click('#bTour')
     ok = tab_to(p, 'lcExit')
     p.keyboard.press('Enter')
     check('tutorial can be skipped by keyboard at any step', ok and not p.is_visible('#lessonCard') and p.is_visible('#view-play'))
+    p = open_page(browser, onboarded=False)
+    ok = tab_to(p, 'welSkip'); p.keyboard.press('Enter')
+    check('the first-visit screen can be skipped, landing on the board', ok and p.is_visible('#view-play') and re.fullmatch(r'[a-h][1-8]', active(p) or ''))
     p.reload()
-    check('tutorial is not forced again', not p.is_visible('#lessonCard'))
+    check('the first-visit screen is not shown again', not p.is_visible('#view-welcome') and not p.is_visible('#lessonCard'))
     p.click('#bTour')
     check('How to use reopens it', p.is_visible('#lessonCard') and 'step 1 of' in p.inner_text('#lcEyebrow'))
     p.click('#lcExit')
@@ -429,7 +465,8 @@ def test_speech(browser):
         p.keyboard.press(k)
     p.wait_for_timeout(150)
     check('moving around the board adds nothing to the live region (the screen reader reads the square)', p.evaluate('window.__live.length') == 0, p.evaluate('window.__live'))
-    p = open_page(browser, onboarded=False)
+    p = open_page(browser)
+    p.click('#bTour')
     p.evaluate("window.__live = []; new MutationObserver(() => { const t = document.getElementById('sr-polite').textContent; if (t) window.__live.push(t); }).observe(document.getElementById('sr-polite'), { childList: true, characterData: true, subtree: true })")
     for _ in range(4):
         p.click('#lcNext') if p.is_visible('#lcNext') else None
@@ -619,13 +656,13 @@ def test_zoom(browser):
              ('360 px phone', 360, 760), ('390 px phone', 390, 844), ('laptop', 1280, 720), ('short laptop', 1024, 600),
              ('tablet', 820, 1180), ('phone on its side', 844, 390)]
     for name, w, h in sizes:
-        for view in ['play', 'learn', 'options', 'lesson', 'tutorial']:
-            p = open_page(browser, w, h)
+        for view in ['play', 'learn', 'options', 'lesson', 'tutorial', 'welcome']:
+            p = open_page(browser, w, h, onboarded=view != 'welcome')
             if view == 'lesson':
                 start_lesson(p, 7)
             elif view == 'tutorial':
                 p.click('#bTour')
-            elif view != 'play':
+            elif view not in ('play', 'welcome'):
                 tab(p, view)
             sideways = overflow(p)
             p.add_style_tag(content=SPACING)
@@ -710,6 +747,8 @@ STATES = {
     'Lesson, question': lambda p: (start_lesson(p, 7), p.click('#lcChoices button:nth-child(2)')),
     'Lesson complete': lambda p: (start_lesson(p, 4), cmd(p, 'b1 a3'), p.click('#lcNext'), cmd(p, 'e4 f6'), p.click('#lcNext')),
     'Tutorial, first step': lambda p: p.click('#bTour'),
+    'First visit': lambda p: p.evaluate("localStorage.setItem('tpc-settings', '{}')") or p.reload(),
+    'First visit, chosen': lambda p: (p.evaluate("localStorage.setItem('tpc-settings', '{}')"), p.reload(), p.click('#welModes .mode-card >> nth=0')),
     'Tutorial, settings and speech help': lambda p: (p.click('#bTour'), jump_to_step(p, 8), p.click('#lcHelp summary')),
     'Learn': lambda p: tab(p, 'learn'),
     'Access': lambda p: (tab(p, 'options'), p.click('#speechHelp summary')),
@@ -738,7 +777,7 @@ def test_axe(browser):
             found[f'{theme} / {state}'] = vs
             check(f'axe {theme} / {state}', not vs, vs)
     # Phone width as well, in the default theme
-    for state in ['Play', 'Tutorial, first step', 'Access']:
+    for state in ['Play', 'Tutorial, first step', 'Access', 'First visit', 'Learn']:
         p = open_page(browser, 390, 844)
         STATES[state](p)
         p.add_script_tag(path=AXE)
@@ -816,7 +855,7 @@ def main():
     try:
         with sync_playwright() as pw:
             browser = pw.chromium.launch(channel='chrome', headless=True)
-            for t in [test_lessons, test_chess, test_tutorial, test_speech, test_keyboard, test_structure, test_zoom, test_contrast, test_offline] + ([test_axe] if AXE else []):
+            for t in [test_lessons, test_motion, test_chess, test_tutorial, test_speech, test_keyboard, test_structure, test_zoom, test_contrast, test_offline] + ([test_axe] if AXE else []):
                 if only and only not in t.__name__:
                     continue
                 print(f'\n== {t.__name__[5:]}')

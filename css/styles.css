@@ -402,6 +402,26 @@ body.contrast .mode-ic{border:2px solid var(--fg)}
 .keys kbd{font-family:var(--font-mono);font-weight:700;font-size:var(--t-sm);padding:2px 7px;border-radius:5px;border:1.5px solid var(--line);background:var(--surface-2);white-space:nowrap}
 .actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr));gap:var(--s2)}
 
+/* ---------- First visit ---------- */
+.welcome{max-width:640px;margin-inline:auto}
+.wel-step{display:grid;gap:var(--s4);justify-items:stretch;padding-block:var(--s4)}
+.wel-step>p{color:var(--muted)}
+.wel-step h2{font-size:var(--t-2xl);letter-spacing:-.01em}
+.wel-mark{width:56px;height:56px;border-radius:var(--r2);overflow:hidden;display:grid;grid-template:1fr 1fr/1fr 1fr;outline:2px solid var(--line)}
+.wel-mark i:nth-child(1),.wel-mark i:nth-child(4){background:var(--sq-light)}
+.wel-mark i:nth-child(2),.wel-mark i:nth-child(3){background:var(--sq-dark)}
+.welcome .modes{grid-template-columns:minmax(0,1fr)}
+.welcome .link-btn{justify-self:center}
+.wel-badge{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:var(--ok);color:var(--ok-fg);animation:rise var(--dur) var(--ease)}
+.wel-badge .ic{width:36px;height:36px}
+.wel-badge svg{stroke-width:3}
+body.welcoming nav.tabs{display:none}
+body.welcoming main{padding-bottom:var(--s5)}
+@media (min-width:600px){.welcome .modes{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* The moving piece may pass over other squares while it slides */
+.sq.moving{overflow:visible;z-index:3}
+
 /* ---------- Wide screens: board on the left, a rail on the right, tabs in the top bar ---------- */
 @media (min-width:900px){
   .play{--board-col:clamp(400px,calc(100dvh - 190px),calc(100vw - 440px));grid-template-columns:var(--board-col) minmax(320px,1fr);align-items:start;gap:var(--s5)}

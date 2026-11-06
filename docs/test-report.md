@@ -2,11 +2,11 @@
 
 Written by `tests/test_app.py`. Run it again after any change.
 
-**377 of 377 checks passed.**
+**428 of 428 checks passed.**
 
 ## axe-core
 
-93 page states checked against WCAG 2.0, 2.1 and 2.2 A and AA rules plus axe best practices. Violations found: **0**.
+107 page states checked against WCAG 2.0, 2.1 and 2.2 A and AA rules plus axe best practices. Violations found: **0**.
 
 
 ## Contrast
@@ -240,46 +240,55 @@ Ratios measured from the colours the page actually uses. Text needs 4.5:1, borde
 | 200% zoom (1280x1024) | options | no | no | none | no board on this view | no |
 | 200% zoom (1280x1024) | lesson | no | no | none | 54px | no |
 | 200% zoom (1280x1024) | tutorial | no | no | none | 54px | no |
+| 200% zoom (1280x1024) | welcome | no | no | none | no board on this view | no |
 | 400% zoom (1280x1024) | play | no | no | none | 44px | yes |
 | 400% zoom (1280x1024) | learn | no | no | none | no board on this view | no |
 | 400% zoom (1280x1024) | options | no | no | none | no board on this view | no |
 | 400% zoom (1280x1024) | lesson | no | no | none | 44px | yes |
 | 400% zoom (1280x1024) | tutorial | no | no | none | 44px | yes |
+| 400% zoom (1280x1024) | welcome | no | no | none | no board on this view | no |
 | 400 px wide phone | play | no | no | none | 50px | no |
 | 400 px wide phone | learn | no | no | none | no board on this view | no |
 | 400 px wide phone | options | no | no | none | no board on this view | no |
 | 400 px wide phone | lesson | no | no | none | 50px | no |
 | 400 px wide phone | tutorial | no | no | none | 50px | no |
+| 400 px wide phone | welcome | no | no | none | no board on this view | no |
 | 360 px phone | play | no | no | none | 45px | no |
 | 360 px phone | learn | no | no | none | no board on this view | no |
 | 360 px phone | options | no | no | none | no board on this view | no |
 | 360 px phone | lesson | no | no | none | 45px | no |
 | 360 px phone | tutorial | no | no | none | 45px | no |
+| 360 px phone | welcome | no | no | none | no board on this view | no |
 | 390 px phone | play | no | no | none | 49px | no |
 | 390 px phone | learn | no | no | none | no board on this view | no |
 | 390 px phone | options | no | no | none | no board on this view | no |
 | 390 px phone | lesson | no | no | none | 49px | no |
 | 390 px phone | tutorial | no | no | none | 49px | no |
+| 390 px phone | welcome | no | no | none | no board on this view | no |
 | laptop | play | no | no | none | 63px | no |
 | laptop | learn | no | no | none | no board on this view | no |
 | laptop | options | no | no | none | no board on this view | no |
 | laptop | lesson | no | no | none | 63px | no |
 | laptop | tutorial | no | no | none | 63px | no |
+| laptop | welcome | no | no | none | no board on this view | no |
 | short laptop | play | no | no | none | 48px | no |
 | short laptop | learn | no | no | none | no board on this view | no |
 | short laptop | options | no | no | none | no board on this view | no |
 | short laptop | lesson | no | no | none | 48px | no |
 | short laptop | tutorial | no | no | none | 48px | no |
+| short laptop | welcome | no | no | none | no board on this view | no |
 | tablet | play | no | no | none | 96px | no |
 | tablet | learn | no | no | none | no board on this view | no |
 | tablet | options | no | no | none | no board on this view | no |
 | tablet | lesson | no | no | none | 96px | no |
 | tablet | tutorial | no | no | none | 96px | no |
+| tablet | welcome | no | no | none | no board on this view | no |
 | phone on its side | play | no | no | none | 45px | no |
 | phone on its side | learn | no | no | none | no board on this view | no |
 | phone on its side | options | no | no | none | no board on this view | no |
 | phone on its side | lesson | no | no | none | 45px | no |
 | phone on its side | tutorial | no | no | none | 45px | no |
+| phone on its side | welcome | no | no | none | no board on this view | no |
 
 ## Keyboard focus order
 
