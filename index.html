@@ -155,21 +155,27 @@
 
   <!-- LEARN -->
   <section id="view-learn" class="section view" aria-labelledby="learnH" hidden>
-    <header>
+    <header class="page-head">
       <h2 id="learnH" tabindex="-1">Learn</h2>
-      <p>Short lessons on the real board, from your first square to your first tactics. Take as long as you like: nothing moves on until you say so. Press H for a hint at any step.</p>
-      <p class="progress"><span id="progress"></span> <progress id="progressBar" value="0" max="1" aria-hidden="true"></progress></p>
+      <p>Short lessons on the real board. Nothing moves on until you say so. Press H for a hint at any step.</p>
     </header>
-    <ol class="lessons" id="lessons" aria-labelledby="learnH"></ol>
+    <section class="card progress-card" aria-labelledby="progH">
+      <h3 id="progH">Your progress</h3>
+      <p class="progress-text" id="progress"></p>
+      <progress id="progressBar" value="0" max="1" aria-hidden="true"></progress>
+      <p class="all-done" id="lessonsAll" hidden><span class="ic" data-icon="check" aria-hidden="true"></span>Every lesson done. Practise any of them again, or play a full game.</p>
+      <button class="btn primary big" type="button" id="bContinue">Start here</button>
+    </section>
+    <div class="units" id="lessons"></div>
 
     <section aria-labelledby="feelH" class="sub">
-      <h2 id="feelH">Know the pieces</h2>
-      <p id="feelIntro">Each piece has its own vibration. Select one to feel it and hear how it moves. Short buzzes are the smaller pieces, long buzzes are the bigger ones.</p>
+      <h3 id="feelH">Know the pieces</h3>
+      <p id="feelIntro">Select a piece to hear how it moves and feel its vibration. Short buzzes are the smaller pieces, long buzzes the bigger ones.</p>
       <div class="feel" id="feel"></div>
     </section>
 
-    <section class="panel" aria-labelledby="wordsH">
-      <h2 id="wordsH">Chess words</h2>
+    <details class="card" id="wordsBox">
+      <summary>Chess words</summary>
       <dl class="glossary">
         <div><dt>File</dt><dd>A column of squares, named a to h.</dd></div>
         <div><dt>Rank</dt><dd>A row of squares, numbered 1 to 8.</dd></div>
@@ -184,27 +190,28 @@
         <div><dt>Fork</dt><dd>One piece attacks two enemy pieces at once.</dd></div>
         <div><dt>Skewer</dt><dd>An attack on a big piece that has a smaller one behind it on the same line.</dd></div>
       </dl>
-    </section>
+    </details>
 
-    <section class="panel" aria-labelledby="howH">
-      <h2 id="howH">How Touchpoint works</h2>
-      <p class="flush">Every square is a labelled control, so VoiceOver and TalkBack read it aloud as "e4, white pawn", and refreshable braille displays show the same text. Deaf players get a caption for every move and a visual alert for check. Deafblind players can type moves from a braille keyboard, and on Android they can feel the board by vibration. Nothing relies on colour alone: selected, last-move and check squares each have their own pattern.</p>
-    </section>
+    <details class="card" id="howBox">
+      <summary>How Touchpoint works</summary>
+      <p>Every square is a labelled control, so VoiceOver and TalkBack read it aloud as "e4, white pawn", and refreshable braille displays show the same text. Deaf players get a caption for every move and a visual alert for check. Deafblind players can type moves from a braille keyboard, and on Android they can feel the board by vibration. Nothing relies on colour alone: selected, last-move and check squares each have their own pattern.</p>
+    </details>
   </section>
 
   <!-- OPTIONS -->
   <section id="view-options" class="section view" aria-labelledby="optH" hidden>
-    <header>
+    <header class="page-head">
       <h2 id="optH" tabindex="-1">Access settings</h2>
-      <p>Start from a quick setup, then change anything. Your choices are saved on this device. App speech is the one exception: it starts off each visit.</p>
+      <p>Your choices are saved on this device. App speech is the one exception: it starts off each visit.</p>
     </header>
-    <section class="panel" aria-labelledby="presetL">
-      <h3 id="presetL">Quick setups</h3>
-      <div class="presets" id="presets" role="group" aria-labelledby="presetL"></div>
+    <section class="card" aria-labelledby="presetL">
+      <h3 id="presetL">How do you want to play?</h3>
+      <p class="hint-text">Pick one to switch on the right settings. You can fine-tune everything below.</p>
+      <div class="modes presets" id="presets" role="group" aria-labelledby="presetL"></div>
     </section>
     <div class="opts" id="opts"></div>
 
-    <details class="panel help" id="speechHelp">
+    <details class="card help" id="speechHelp">
       <summary>If the app's speech does not work</summary>
       <div id="speechHelpBody">
         <ul>
@@ -218,8 +225,8 @@
       </div>
     </details>
 
-    <section class="panel" aria-labelledby="keysH">
-      <h2 id="keysH">Keyboard and braille keyboard shortcuts</h2>
+    <details class="card" id="keysBox">
+      <summary>Keyboard and braille keyboard shortcuts</summary>
       <p class="flush">These work while a square on the board has focus.</p>
       <div class="table-scroll" tabindex="0" role="region" aria-label="Shortcuts table">
       <table class="keys">
@@ -244,7 +251,7 @@
       </table>
       </div>
       <p class="flush">In the command box you can also type: board, last, status, undo, flip, new, again, stop, speech on, speech off, tutorial, hint, next, repeat, leave, moves e2, attacks e4, rank 4, file e, about knight.</p>
-    </section>
+    </details>
   </section>
 </main>
 

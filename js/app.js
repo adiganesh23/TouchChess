@@ -549,8 +549,8 @@ function renderChoices(st) {
   // The main action comes first when the extras below it are optional.
   if (st.presets) box.before($('lcNext')); else box.after($('lcNext'));
   if (st.presets) {
-    box.innerHTML = '<p class="label" id="lcPresetL">Quick setup (optional)</p>';
-    const grp = document.createElement('div'); grp.className = 'presets'; grp.setAttribute('role', 'group'); grp.setAttribute('aria-labelledby', 'lcPresetL');
+    box.innerHTML = '<p class="label" id="lcPresetL">How do you want to play? (optional)</p>';
+    const grp = document.createElement('div'); grp.className = 'modes presets'; grp.setAttribute('role', 'group'); grp.setAttribute('aria-labelledby', 'lcPresetL');
     PRESETS.forEach(p => grp.appendChild(presetButton(p)));
     box.appendChild(grp);
   }
@@ -826,26 +826,43 @@ document.querySelectorAll('nav.tabs button').forEach(b => {
   g.innerHTML = `<svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">${PIECE_ART[g.dataset.piece]}</svg>`;
 });
 
+/* Lessons come in units, in order. Each lesson is one large row; status has its own shape and words, not just colour. */
+const UNITS = [
+  ['The board and the pieces', ['map', 'rook', 'bishop', 'queen', 'knight', 'pawn', 'king']],
+  ['Attack and defence', ['values', 'check', 'mate', 'tactics']],
+  ['Draws and special rules', ['draws', 'special']],
+  ['Your first game', ['opening']]
+];
 function renderLessons() {
-  const box = $('lessons'), nextId = (LESSONS.find(l => !done[l.id]) || {}).id, finished = LESSONS.filter(l => done[l.id]).length;
-  $('progress').textContent = finished === LESSONS.length ? `You finished all ${LESSONS.length} lessons.` : `${finished} of ${LESSONS.length} lessons finished.`;
+  const box = $('lessons'), next = LESSONS.find(l => !done[l.id]), finished = LESSONS.filter(l => done[l.id]).length, all = finished === LESSONS.length;
+  $('progress').textContent = all ? `You finished all ${LESSONS.length} lessons.` : `${finished} of ${LESSONS.length} lessons finished.`;
   $('progressBar').value = finished; $('progressBar').max = LESSONS.length;
+  const cont = $('bContinue');
+  cont.textContent = all ? 'Play a game' : finished ? `Continue: ${next.title}` : `Start here: ${next.title}`;
+  cont.onclick = () => all ? show('play') : startLesson(next.id);
+  $('lessonsAll').hidden = !all;
   box.innerHTML = '';
-  LESSONS.forEach((l, i) => {
-    const d = document.createElement('li'), isNext = l.id === nextId;
-    d.className = 'lesson' + (isNext ? ' next' : '') + (done[l.id] ? ' done' : '');
-    const top = document.createElement('div'); top.className = 'top';
-    const h = document.createElement('h3'); h.textContent = `${i + 1}. ${l.title}`;
-    const badge = document.createElement('span'); badge.className = 'badge' + (done[l.id] ? ' done' : isNext ? ' next' : '');
-    badge.textContent = done[l.id] ? 'Done' : isNext ? 'Up next' : plural(l.steps.length, 'step');
-    top.append(h, badge);
-    const p = document.createElement('p'); p.textContent = l.intro;
-    const b = document.createElement('button');
-    b.className = 'btn' + (isNext ? ' primary' : ''); b.type = 'button';
-    b.textContent = done[l.id] ? 'Practise again' : isNext ? 'Start here' : 'Start lesson';
-    b.setAttribute('aria-label', `${b.textContent}: ${l.title}${done[l.id] ? ', done' : ''}`);
-    b.addEventListener('click', () => startLesson(l.id));
-    d.append(top, p, b); box.appendChild(d);
+  const used = new Set();
+  const units = UNITS.map(([name, ids]) => [name, ids.filter(id => LESSONS.some(l => l.id === id))]);
+  const rest = LESSONS.filter(l => !units.some(u => u[1].includes(l.id))).map(l => l.id);
+  if (rest.length) units.push(['More lessons', rest]);
+  units.forEach(([name, ids], u) => {
+    const sec = document.createElement('section'); sec.className = 'unit'; sec.setAttribute('aria-labelledby', 'unit-' + u);
+    const doneHere = ids.filter(id => done[id]).length;
+    sec.innerHTML = `<div class="unit-head"><h3 id="unit-${u}">${name}</h3><span class="unit-count">${doneHere} of ${ids.length} done</span></div>`;
+    const ol = document.createElement('ol'); ol.className = 'unit-list'; ol.start = LESSONS.findIndex(l => l.id === ids[0]) + 1;
+    for (const id of ids) {
+      const l = LESSONS.find(x => x.id === id), i = LESSONS.indexOf(l), isNext = next && l.id === next.id;
+      used.add(id);
+      const state = done[l.id] ? 'done' : isNext ? 'next' : 'todo', word = { done: 'Done', next: 'Up next', todo: 'Not started' }[state];
+      const li = document.createElement('li'); li.className = 'lesson ' + state;
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'row-btn';
+      b.innerHTML = `<span class="row-num" aria-hidden="true">${i + 1}</span><span class="row-main"><span class="row-title">${l.title}</span><span class="row-sub">${plural(l.steps.length, 'step')} · ${word}</span></span><span class="row-status ${state}" aria-hidden="true">${iconSvg(state === 'done' ? 'check' : state === 'next' ? 'next' : 'todo')}</span>`;
+      b.setAttribute('aria-label', `${i + 1}. ${l.title}. ${plural(l.steps.length, 'step')}. ${word}.`);
+      b.addEventListener('click', () => startLesson(l.id));
+      li.appendChild(b); ol.appendChild(li);
+    }
+    sec.appendChild(ol); box.appendChild(sec);
   });
 }
 function renderFeel() {
@@ -853,37 +870,44 @@ function renderFeel() {
   if (!CAN_VIBRATE) $('feelIntro').textContent = 'Select a piece to hear how it moves. This device cannot vibrate from a web page (iPhones do not allow it), but the patterns are shown for when you use one that can.';
   ['p', 'n', 'b', 'r', 'q', 'k'].forEach(t => {
     const i = PIECE_INFO[t], b = document.createElement('button');
-    b.type = 'button'; b.className = 'btn';
-    b.innerHTML = `<span class="swatch">${pieceSvg(t, 'w')}</span><strong><span>${cap(NAMES[t])}</span><span class="buzz" aria-hidden="true">${i.mark}</span></strong><small>${i.points}. ${i.how}</small>`;
-    b.setAttribute('aria-label', `${NAMES[t]}, ${i.points}. ${i.how} Vibration: ${i.buzz}.`);
+    b.type = 'button'; b.className = 'tile';
+    b.innerHTML = `<span class="swatch">${pieceSvg(t, 'w')}</span><span class="tile-name">${cap(NAMES[t])}</span><span class="tile-sub">${i.points}</span><span class="buzz" aria-hidden="true">${i.mark}</span>`;
+    b.setAttribute('aria-label', `${cap(NAMES[t])}, ${i.points}. ${i.how} Vibration: ${i.buzz}.`);
     b.addEventListener('click', () => {
       announce(`${cap(NAMES[t])}, ${i.points}. ${i.how}${CAN_VIBRATE ? ` Vibration: ${i.buzz}.` : ''}`, 'info', { haptic: PAT[t], forceHaptic: true, short: `${cap(NAMES[t])}: ${i.points}, vibration ${i.buzz}.` });
     });
     box.appendChild(b);
   });
 }
+/* "How do you want to play?" Four main ways, plus two more specific ones. */
 const PRESETS = [
-  { id: 'reader', label: 'I use a screen reader', detail: 'VoiceOver, TalkBack, NVDA or JAWS reads everything.', set: { speech: false, sound: false, haptics: true, explore: false, brief: false, flash: true, calm: false, contrast: false, letters: false } },
-  { id: 'voice', label: 'Speak to me', detail: 'This app reads aloud, with tones that show where you are.', set: { speech: true, sound: true, haptics: true, explore: true, brief: false, flash: true, calm: false, contrast: false, letters: false } },
-  { id: 'braille', label: 'I use braille or touch', detail: 'Short messages for braille displays, vibration, no sound.', set: { speech: false, sound: false, haptics: true, explore: true, brief: true, flash: true, calm: false, contrast: false, letters: false } },
-  { id: 'deaf', label: 'I am Deaf or hard of hearing', detail: 'Captions and visual alerts, no sound.', set: { speech: false, sound: false, haptics: true, explore: false, brief: false, flash: true, calm: false, contrast: false, letters: false, captionsOpen: true } },
-  { id: 'lowvision', label: 'I have low vision', detail: 'High contrast, letters for pieces, larger text.', set: { speech: false, sound: false, haptics: true, explore: false, brief: false, flash: true, calm: false, contrast: true, letters: true, coords: true, textSize: 'large' } },
-  { id: 'calm', label: 'I prefer things calm', detail: 'Soft colours, no flashes or tones, more time.', set: { speech: false, sound: false, haptics: false, explore: false, brief: true, flash: false, calm: true, contrast: false, letters: false } }
+  { id: 'voice', main: true, icon: 'ear', label: 'Listen', detail: 'The app reads everything aloud, with a tone for each square.', set: { speech: true, sound: true, haptics: true, explore: true, brief: false, flash: true, calm: false, contrast: false, letters: false } },
+  { id: 'braille', main: true, icon: 'hand', label: 'Feel', detail: 'Vibration for each piece, and short messages for braille displays.', set: { speech: false, sound: false, haptics: true, explore: true, brief: true, flash: true, calm: false, contrast: false, letters: false } },
+  { id: 'lowvision', main: true, icon: 'eye', label: 'See', detail: 'High contrast, larger text and bold letters for pieces.', set: { speech: false, sound: false, haptics: true, explore: false, brief: false, flash: true, calm: false, contrast: true, letters: true, coords: true, textSize: 'large' } },
+  { id: 'calm', main: true, icon: 'moon', label: 'Calm', detail: 'Soft colours, no motion, flashes or tones, and more time.', set: { speech: false, sound: false, haptics: false, explore: false, brief: true, flash: false, calm: true, contrast: false, letters: false } },
+  { id: 'reader', icon: 'reader', label: 'I use a screen reader', detail: 'VoiceOver, TalkBack, NVDA or JAWS reads everything. App speech stays off.', set: { speech: false, sound: false, haptics: true, explore: false, brief: false, flash: true, calm: false, contrast: false, letters: false } },
+  { id: 'deaf', icon: 'deaf', label: 'I am Deaf or hard of hearing', detail: 'Captions always open and visual alerts, no sound.', set: { speech: false, sound: false, haptics: true, explore: false, brief: false, flash: true, calm: false, contrast: false, letters: false, captionsOpen: true } }
 ];
 function applyPreset(p) {
-  Object.assign(settings, p.set, { onboarded: true }); save();
+  Object.assign(settings, p.set, { onboarded: true, mode: p.id }); save(); renderPresets();
   syncControls(); applySettings(); $('capBox').open = !!settings.captionsOpen;
   announce(`Set up: ${p.label}. You can change anything on the Access tab.`, 'success', { forceSpeech: p.id === 'voice' });
 }
 function presetButton(p) {
   const b = document.createElement('button');
-  b.type = 'button'; b.className = 'btn'; b.textContent = p.label;
-  const s = document.createElement('small'); s.textContent = p.detail; b.appendChild(s);
+  b.type = 'button'; b.className = 'mode-card' + (p.main ? '' : ' minor');
+  const chosen = settings.mode === p.id;
+  b.innerHTML = `<span class="mode-ic">${iconSvg(p.icon)}</span><span class="mode-text"><span class="mode-title">${p.label}${chosen ? ' <span class="mode-chosen">· your choice</span>' : ''}</span><span class="mode-sub">${p.detail}</span></span>`;
   b.addEventListener('click', () => applyPreset(p));
   return b;
 }
-function renderPresets() { const box = $('presets'); box.innerHTML = ''; PRESETS.forEach(p => box.appendChild(presetButton(p))); }
-
+function renderPresets() {
+  document.querySelectorAll('.modes').forEach(box => {
+    const had = box.contains(document.activeElement) ? [...box.children].indexOf(document.activeElement) : -1;
+    box.innerHTML = ''; PRESETS.forEach(p => box.appendChild(presetButton(p)));
+    if (had >= 0 && box.children[had]) box.children[had].focus();
+  });
+}
 const GROUPS = [['hear', 'Speech and sound'], ['see', 'Seeing'], ['touch', 'Touch'], ['messages', 'Messages and comfort'], ['game', 'Game']];
 const TEXT_SIZES = [['normal', 'Normal'], ['large', 'Large'], ['xlarge', 'Extra large'], ['huge', 'Largest']];
 const OPTS = [
@@ -924,24 +948,24 @@ function wireControl(o, el) {
 function renderOpts() {
   const box = $('opts'); box.innerHTML = '';
   for (const [gid, gname] of GROUPS) {
-    const sec = document.createElement('section'); sec.className = 'opt-group'; sec.setAttribute('aria-labelledby', 'grp-' + gid);
+    const sec = document.createElement('section'); sec.className = 'opt-group card'; sec.setAttribute('aria-labelledby', 'grp-' + gid);
     sec.innerHTML = `<h3 id="grp-${gid}">${gname}</h3>`;
     const list = document.createElement('div'); list.className = 'opt-list';
     for (const o of OPTS.filter(x => x.g === gid)) {
       const id = 'opt-' + o.k, d = document.createElement('div'); d.className = 'opt';
-      d.innerHTML = `<div class="opt-head"><label for="${id}">${o.t}</label>${control(o, id)}</div><p id="${id}-d">${o.d}</p><ul class="tags" aria-label="Helps with">${o.tags.map(t => `<li class="tag">${t}</li>`).join('')}</ul>`;
+      d.innerHTML = `<div class="opt-head"><label for="${id}">${o.t}</label>${control(o, id)}</div><p id="${id}-d">${o.d}</p><p class="tags">Helps with: ${o.tags.join(', ')}</p>`;
       list.appendChild(d);
       wireControl(o, d.querySelector('#' + id));
     }
     sec.appendChild(list);
     if (gid === 'hear') {
-      const tests = document.createElement('div'); tests.className = 'actions';
-      tests.innerHTML = '<button class="btn" type="button" id="tVoice">Test voice</button><button class="btn" type="button" id="tTone">Test tones</button><button class="btn" type="button" id="tVib">Test vibration</button>';
+      const tests = document.createElement('div'); tests.className = 'test-row';
+      tests.innerHTML = '<button class="chip-btn" type="button" id="tVoice"><span class="ic" data-icon="speaker" aria-hidden="true"></span>Test voice</button><button class="chip-btn" type="button" id="tTone"><span class="ic" data-icon="ear" aria-hidden="true"></span>Test tones</button><button class="chip-btn" type="button" id="tVib"><span class="ic" data-icon="hand" aria-hidden="true"></span>Test vibration</button>';
       sec.appendChild(tests);
     }
     box.appendChild(sec);
   }
-  fillVoices();
+  fillVoices(); paintIcons(box);
   $('tVib').onclick = () => {
     if (!CAN_VIBRATE) return announce('This device or browser cannot vibrate from a web page.', 'error');
     buzz(PAT.check, true); announce('Vibration sent. You should feel a strong double buzz.', 'info');

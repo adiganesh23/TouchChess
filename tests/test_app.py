@@ -83,7 +83,7 @@ def tab(p, view):
 
 def start_lesson(p, index):
     tab(p, 'learn')
-    p.click(f'#lessons > li:nth-child({index + 1}) button')
+    p.locator('#lessons .lesson button').nth(index).click()
 
 
 def open_more(p):
@@ -562,7 +562,7 @@ def test_keyboard(browser):
     check('tabs work by keyboard and move focus to the heading', ok and active(p) == 'optH')
     ok = tab_to(p, 'opt-contrast'); p.keyboard.press('Space')
     check('settings work by keyboard', ok and p.evaluate("document.body.classList.contains('contrast')"))
-    ok = tab_to(p, lambda a: p.evaluate("document.activeElement.textContent").startswith('I have low vision'))
+    ok = tab_to(p, lambda a: p.evaluate("document.activeElement.textContent").startswith('See'))
     p.keyboard.press('Enter')
     check('quick setups work by keyboard', ok and p.evaluate("document.documentElement.dataset.text") == 'large')
     check('keyboard run raised no errors', not p.errors, p.errors)
